@@ -1,0 +1,12 @@
+# SAM model config for validation. Values come from SAM_TEST_* env vars.
+# Loaded by tests/configs/agent.yaml via the model_provider alias mechanism,
+# or referenced directly depending on your SAM version's config layout.
+model:
+  model: ${SAM_TEST_MODEL}          # e.g. openai/Qwen/Qwen2.5-32B-Instruct
+  api_base: ${SAM_TEST_API_BASE}    # e.g. http://localhost:8000/v1
+  api_key: ${SAM_TEST_API_KEY, sk-noop}
+  parallel_tool_calls: true
+  temperature: 0.2
+  max_tokens: 4096
+  request_timeout_seconds: 120
+  num_retries: 1

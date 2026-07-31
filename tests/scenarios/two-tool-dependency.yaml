@@ -1,0 +1,36 @@
+# Scenario: dependent two-tool chain — the core SAM agent-loop test.
+#
+# This is a BEHAVIORAL spec (not a mocked-LLM harness scenario): the model runs
+# live against your endpoint and must genuinely decide to chain the tools.
+#
+# Gates exercised: H1 (tool calls), H2 (streaming deltas), H3 (tool-result turn),
+# S3 (JSON arg fidelity). This is the single most important test — pass it and the
+# model can drive a SAM agent.
+
+name: two-tool-dependency
+description: >
+  The agent must call lookup_order(order_id) to get a warehouse code, then call
+  get_shipping_estimate(warehouse, destination) using THAT code. A model that
+  cannot round-trip a tool result cannot produce the correct warehouse and fails.
+
+prompt: |
+  I need the shipping estimate for order ORD-1001 to Copenhagen.
+
+expected_behavior:
+  - the agent calls lookup_order with order_id="ORD-1001"
+  - lookup_order returns warehouse="WH-DK-02"
+  - the agent then calls get_shipping_estimate with warehouse="WH-DK-02" and destination="Copenhagen"
+  - the second call's warehouse argument EXACTLY matches the value returned by the first call
+  - the final answer states the shipping estimate (1 day, 4.90 EUR)
+
+assertions:
+  tool_calls_in_order: ["lookup_order", "get_shipping_estimate"]
+  second_call_arg_matches_first_result:
+    arg: warehouse
+    equals: "WH-DK-02"
+  final_answer_contains_any: ["4.90", "4,90", "1 day", "1 business day"]
+
+pass_criteria: >
+  All assertions hold. If the warehouse code is wrong or absent in the second
+  call, the model is not truly consuming tool results (H3 failure) even if it
+  emitted syntactically valid tool calls.

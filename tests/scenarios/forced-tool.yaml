@@ -1,0 +1,28 @@
+# Scenario: forced tool call — validates S1 (tool_choice: required).
+#
+# SAM's structured-output and mandatory-call paths set tool_choice to require a
+# specific tool. A model that ignores this and answers from parametric knowledge
+# breaks flows like the JDE format_disclaimer mandatory-call pattern.
+
+name: forced-tool
+description: >
+  With tool_choice forcing lookup_order, the model must call it even for a
+  question it might otherwise try to answer directly.
+
+prompt: |
+  Just tell me what item is in order ORD-1002.
+
+tool_choice: required          # or the named tool, depending on SAM version
+
+expected_behavior:
+  - the agent calls lookup_order (does NOT answer from memory)
+  - lookup_order returns item="Tuborg Green 12-pack"
+  - the final answer names that item
+
+assertions:
+  must_call_tool: lookup_order
+  final_answer_contains_any: ["Tuborg Green", "Tuborg Green 12-pack"]
+
+pass_criteria: >
+  The model issues the forced tool call. A model that skips the call and answers
+  directly fails S1 — usable for auto flows but not for mandatory-tool flows.

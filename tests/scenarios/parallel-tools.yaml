@@ -1,0 +1,29 @@
+# Scenario: parallel tool calls — validates N1 (nice-to-have).
+#
+# SAM handles multiple tool calls in one assistant turn and preserves their
+# relative result order (internal/agentcore/agent.go). This checks the model
+# emits two INDEPENDENT calls together rather than serializing them.
+
+name: parallel-tools
+description: >
+  Two independent order lookups in one question. A model with parallel tool
+  calling issues both lookup_order calls in a single turn.
+
+prompt: |
+  Look up both order ORD-1001 and order ORD-1002 and tell me the item in each.
+
+expected_behavior:
+  - the agent issues two lookup_order calls (ideally in one assistant turn)
+  - one with order_id="ORD-1001", one with order_id="ORD-1002"
+  - the final answer names both items
+
+assertions:
+  tool_calls_include:
+    - {tool: lookup_order, arg: order_id, equals: "ORD-1001"}
+    - {tool: lookup_order, arg: order_id, equals: "ORD-1002"}
+  final_answer_contains_all: ["Carlsberg Pilsner", "Tuborg Green"]
+
+pass_criteria: >
+  Both lookups happen and both items are reported. Emitting them in ONE turn
+  (parallel) is the N1 win; serializing across two turns still passes correctness
+  but does not demonstrate parallel tool calling.

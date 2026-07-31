@@ -1,0 +1,12 @@
+*.log
+*.db
+*.db-wal
+*.db-shm
+.env
+.DS_Store
+__pycache__/
+*.pyc
+.venv/
+/tmp/
+tmp/
+sam-validation-*.json

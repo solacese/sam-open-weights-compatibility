@@ -1,0 +1,70 @@
+# SAM agent config for validating a REAL open-weights model.
+#
+# Unlike the SAM declarative harness (which MOCKS the LLM via static_response),
+# this config runs a live agent against your endpoint so the model actually has
+# to decide to call tools, stream them, and use their results. That is the whole
+# point — a mocked LLM would prove nothing about the model.
+#
+# The agent exposes two builtin tools whose outputs chain. The validation prompt
+# (tests/scenarios/two-tool-dependency.yaml) forces a dependent call: the model
+# must use the result of tool 1 as the argument to tool 2.
+#
+# Run via: ./scripts/run-sam-scenario.sh  (renders SAM_TEST_* into this file)
+
+log:
+  stdout_log_level: INFO
+
+apps:
+  - name: model_validation_agent
+    app_module: solace_agent_mesh.agent.sac.app   # for Python SAM; Go SAM ignores/maps this
+    broker:
+      dev_mode: true
+    app_config:
+      agent_name: ModelValidationAgent
+      namespace: ${NAMESPACE, default}
+      supports_streaming: true            # exercises H2 (streaming tool-call deltas)
+      max_llm_calls_per_task: 8
+
+      model:
+        model: ${SAM_TEST_MODEL}
+        api_base: ${SAM_TEST_API_BASE}
+        api_key: ${SAM_TEST_API_KEY, sk-noop}
+        parallel_tool_calls: true
+        temperature: 0.2
+        max_tokens: 4096
+        request_timeout_seconds: 120
+
+      instruction: |
+        You are a validation agent. You MUST use tools to answer; never guess.
+        For any order question:
+          1. Call `lookup_order` with the order_id to get its details, including a `warehouse` code.
+          2. Then call `get_shipping_estimate` passing that EXACT `warehouse` code and the destination.
+          3. Report the shipping estimate to the user.
+        Call tools sequentially. Use the warehouse code returned by lookup_order verbatim.
+
+      session_service:
+        type: memory
+      artifact_service:
+        type: memory
+      agent_discovery:
+        enabled: false
+      agent_card_publishing:
+        interval_seconds: 0
+
+      # Two chained tools. In a real SAM install these resolve to Go STR tool
+      # binaries under tools/go/ or Python tools; here they are declared so the
+      # runner can register mock implementations that return deterministic data.
+      # See scripts/run-sam-scenario.sh for how the mock tool server is wired.
+      tools:
+        - tool_type: python
+          component_base_path: ./tests/tools
+          component_module: validation_tools
+          function_name: lookup_order
+          tool_config:
+            tool_name: lookup_order
+        - tool_type: python
+          component_base_path: ./tests/tools
+          component_module: validation_tools
+          function_name: get_shipping_estimate
+          tool_config:
+            tool_name: get_shipping_estimate
