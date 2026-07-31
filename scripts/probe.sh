@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# probe.sh — check the three SAM hard gates directly against an OpenAI-compatible
+# probe.sh - check the three SAM hard gates directly against an OpenAI-compatible
 # endpoint. No SAM required. Uses curl + jq only.
 #
 #   export SAM_TEST_MODEL="openai/Qwen/Qwen2.5-32B-Instruct"  # provider/model
@@ -39,9 +39,9 @@ NAME1=$(echo "$RESP1" | jq -r '.choices[0].message.tool_calls[0].function.name /
 ARGS1=$(echo "$RESP1" | jq -r '.choices[0].message.tool_calls[0].function.arguments // empty' 2>/dev/null)
 CALL_ID=$(echo "$RESP1" | jq -r '.choices[0].message.tool_calls[0].id // "call_1"' 2>/dev/null)
 if [ "$NAME1" = "get_weather" ] && echo "$ARGS1" | jq -e '.city' >/dev/null 2>&1; then
-  green "  PASS — tool_calls[0]=get_weather args=$ARGS1"; pass=$((pass+1))
+  green "  PASS - tool_calls[0]=get_weather args=$ARGS1"; pass=$((pass+1))
 else
-  red   "  FAIL — no valid get_weather tool call. raw: $(echo "$RESP1" | head -c 400)"; fail=$((fail+1))
+  red   "  FAIL - no valid get_weather tool call. raw: $(echo "$RESP1" | head -c 400)"; fail=$((fail+1))
 fi
 echo
 
@@ -55,9 +55,9 @@ FRAG=$(echo "$STREAM" | sed -n 's/^data: //p' | grep -v '^\[DONE\]' \
 SAW_NAME=$(echo "$STREAM" | sed -n 's/^data: //p' | grep -v '^\[DONE\]' \
   | jq -r '.choices[0].delta.tool_calls[0].function.name // empty' 2>/dev/null | grep -m1 . || true)
 if [ "$SAW_NAME" = "get_weather" ] && echo "$FRAG" | jq -e '.city' >/dev/null 2>&1; then
-  green "  PASS — streamed tool call reassembled: $FRAG"; pass=$((pass+1))
+  green "  PASS - streamed tool call reassembled: $FRAG"; pass=$((pass+1))
 else
-  red   "  FAIL — streamed deltas did not reassemble into a valid tool call."
+  red   "  FAIL - streamed deltas did not reassemble into a valid tool call."
   red   "         name=$SAW_NAME frag=$FRAG (server may not emit tool-call deltas while streaming)"; fail=$((fail+1))
 fi
 echo
@@ -74,17 +74,17 @@ RESP3=$(curl -sS -X POST "$URL" -H "Authorization: Bearer $API_KEY" -H "Content-
 FINAL=$(echo "$RESP3" | jq -r '.choices[0].message.content // empty' 2>/dev/null)
 RECALLED=$(echo "$RESP3" | jq -r '.choices[0].message.tool_calls[0].function.name // empty' 2>/dev/null)
 if echo "$FINAL" | grep -Eiq '18|partly cloudy' && [ -z "$RECALLED" ]; then
-  green "  PASS — used the tool result: $(echo "$FINAL" | head -c 200)"; pass=$((pass+1))
+  green "  PASS - used the tool result: $(echo "$FINAL" | head -c 200)"; pass=$((pass+1))
 else
-  red   "  FAIL — did not use the tool result (recalled=$RECALLED). answer: $(echo "$FINAL" | head -c 200)"; fail=$((fail+1))
+  red   "  FAIL - did not use the tool result (recalled=$RECALLED). answer: $(echo "$FINAL" | head -c 200)"; fail=$((fail+1))
 fi
 echo
 
 echo "== Result: $pass passed, $fail failed =="
 if [ "$fail" -eq 0 ]; then
-  green "All hard gates PASS — proceed to run-sam-scenario.sh for the full agent-loop test."
+  green "All hard gates PASS - proceed to run-sam-scenario.sh for the full agent-loop test."
   exit 0
 else
-  red "One or more hard gates FAILED — see docs/validation.md ('Reading failures'). NOT SAM-compatible on this stack yet."
+  red "One or more hard gates FAILED - see docs/validation.md ('Reading failures'). NOT SAM-compatible on this stack yet."
   exit 1
 fi

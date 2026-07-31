@@ -3,7 +3,7 @@
 # Unlike the SAM declarative harness (which MOCKS the LLM via static_response),
 # this config runs a live agent against your endpoint so the model actually has
 # to decide to call tools, stream them, and use their results. That is the whole
-# point — a mocked LLM would prove nothing about the model.
+# point - a mocked LLM would prove nothing about the model.
 #
 # The agent exposes two builtin tools whose outputs chain. The validation prompt
 # (tests/scenarios/two-tool-dependency.yaml) forces a dependent call: the model

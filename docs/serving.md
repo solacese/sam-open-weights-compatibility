@@ -2,7 +2,7 @@
 
 SAM needs an **OpenAI-compatible** endpoint. The recipes below stand one up for each common server, plus the SAM `model:` block that points at it. The golden rule from the SAM docs:
 
-> The `openai/` prefix tells Bifrost which **API protocol** to speak — not which model runs. A proxy fronting *any* open model uses `openai/` + `api_base`. `ollama/` is a first-class prefix for Ollama.
+> The `openai/` prefix tells Bifrost which **API protocol** to speak - not which model runs. A proxy fronting *any* open model uses `openai/` + `api_base`. `ollama/` is a first-class prefix for Ollama.
 
 The critical detail for SAM is **tool calling must work while streaming (H2)**. Most servers need an explicit tool-call parser flag for that. Each recipe calls it out.
 
@@ -21,12 +21,17 @@ vllm serve Qwen/Qwen2.5-32B-Instruct \
 - `--enable-auto-tool-choice` + `--tool-call-parser <parser>` are **required** for H1/H2. Pick the parser that matches the model family:
   | Model family | `--tool-call-parser` |
   |---|---|
-  | Qwen2.5 / Qwen2.5-Coder | `hermes` |
+  | Qwen2.5 / Qwen2.5-Coder / Qwen3 | `hermes` |
   | Llama 3.1 / 3.3 | `llama3_json` |
-  | Mistral / Mixtral / Mistral Small/NeMo | `mistral` |
-  | Command R / R+ | `hermes` (or model-specific in recent vLLM) |
-  | DeepSeek-V3 / R1 | `deepseek_v3` |
-- Serving a quantized checkpoint? Add `--quantization awq` (or `gptq`, `fp8`) and use the matching quantized repo. **Aggressive quant degrades JSON-arg fidelity (S3) — validate.**
+  | Mistral / Mixtral / Mistral Small / NeMo / Large | `mistral` |
+  | DeepSeek-V3 / R1 (0528) | `deepseek_v3` |
+  | DeepSeek-V3.1 | `deepseek_v31` |
+  | GLM-4.5 / 4.6 | `glm45` |
+  | gpt-oss 20b / 120b | `openai` |
+  | Kimi-K2 | `kimi_k2` |
+  | Command A (03-2025) | `cohere_command3` |
+  | Command R / R+ (legacy) | no current parser - prefer Command A |
+- Serving a quantized checkpoint? Add `--quantization awq` (or `gptq`, `fp8`) and use the matching quantized repo. **Aggressive quant degrades JSON-arg fidelity (S3) - validate.**
 
 SAM `model:` block:
 
@@ -79,7 +84,7 @@ model:
   api_key: ollama
 ```
 
-Ollama tool calling works for tool-capable models (Qwen2.5, Llama 3.1/3.3, Mistral) but **streaming tool-call support has historically lagged** — run `probe.sh` check 2 (H2) before relying on it. Great for dev, validate for prod.
+Ollama tool calling works for tool-capable models (Qwen2.5, Llama 3.1/3.3, Mistral) but **streaming tool-call support has historically lagged** - run `probe.sh` check 2 (H2) before relying on it. Great for dev, validate for prod.
 
 ---
 
@@ -135,7 +140,7 @@ model:
   api_key: ${LITELLM_KEY}
 ```
 
-This is exactly the pattern a corporate inference gateway (e.g. an internal MaaS) uses — SAM points at the gateway with `openai/` + `api_base` + a virtual key, and the gateway fans out to the real backends.
+This is exactly the pattern a corporate inference gateway (e.g. an internal MaaS) uses - SAM points at the gateway with `openai/` + `api_base` + a virtual key, and the gateway fans out to the real backends.
 
 ---
 
@@ -160,7 +165,7 @@ See the SAM air-gap docs for the broader offline story.
 - [ ] Endpoint answers `GET /v1/models` (OpenAI-compatible).
 - [ ] Tool-call parser flag set and matches the model family.
 - [ ] `probe.sh` H1 (tool call) PASS.
-- [ ] `probe.sh` H2 (streaming tool call) PASS — **this is the one servers most often miss.**
+- [ ] `probe.sh` H2 (streaming tool call) PASS - **this is the one servers most often miss.**
 - [ ] `probe.sh` H3 (tool-result turn) PASS.
 - [ ] Context window (`--max-model-len` / server config) ≥ your agent's need (32K leaf, 128K orchestrator).
 - [ ] Quant level validated for JSON-argument fidelity if using AWQ/GPTQ/FP8.

@@ -1,11 +1,13 @@
-# 11. Mistral Small 3 24B
+# 15. Mistral Small 3 24B
 
 | Field | Value |
 |---|---|
 | HF repo | `mistralai/Mistral-Small-24B-Instruct-2501` |
 | Params (active) | 24B (24B) |
 | Context window | 32,000 tokens |
+| Native tool calling | **yes** |
 | Tool-calling grade | **very-good** |
+| Benchmark | Mistral Small line on BFCL Function-Calling tier |
 | License | Apache-2.0 |
 | Best SAM role | domain-agent |
 | vLLM tool parser | `mistral` |
@@ -14,8 +16,8 @@
 
 Reliable tool calling. Good for orchestrator or domain agents.
 
-- **Hard gates (H1 tool calls / H2 streaming / H3 tool-result turns):** expected PASS — verify on your stack.
-- **Context (S2):** 32,000 tokens — adequate for leaf agents; tight for deep multi-hop.
+- **Hard gates (H1 tool calls / H2 streaming / H3 tool-result turns):** expected PASS - verify on your stack.
+- **Context (S2):** 32,000 tokens - adequate for leaf agents; tight for deep multi-hop.
 - **Role:** suited to domain/leaf agents (one or two tools, cost-sensitive, high volume).
 - **Notes:** Fast native tool calling; in SAM modelinfo.
 
@@ -30,7 +32,6 @@ model:
   temperature: 0.2
   max_tokens: 4096
 ```
-
 ## Serve it (vLLM)
 
 ```bash

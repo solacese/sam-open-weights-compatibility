@@ -1,4 +1,4 @@
-# Scenario: forced tool call — validates S1 (tool_choice: required).
+# Scenario: forced tool call - validates S1 (tool_choice: required).
 #
 # SAM's structured-output and mandatory-call paths set tool_choice to require a
 # specific tool. A model that ignores this and answers from parametric knowledge
@@ -25,4 +25,4 @@ assertions:
 
 pass_criteria: >
   The model issues the forced tool call. A model that skips the call and answers
-  directly fails S1 — usable for auto flows but not for mandatory-tool flows.
+  directly fails S1 - usable for auto flows but not for mandatory-tool flows.

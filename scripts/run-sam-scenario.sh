@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# run-sam-scenario.sh — run a real SAM agent against your open-weights endpoint
+# run-sam-scenario.sh - run a real SAM agent against your open-weights endpoint
 # and check a validation scenario. This exercises the ACTUAL agent loop
 # (streaming reassembly + multi-turn tool results), which the endpoint-only
 # probe.sh cannot fully reproduce.

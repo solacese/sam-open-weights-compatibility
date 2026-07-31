@@ -1,10 +1,10 @@
-# Scenario: dependent two-tool chain — the core SAM agent-loop test.
+# Scenario: dependent two-tool chain - the core SAM agent-loop test.
 #
 # This is a BEHAVIORAL spec (not a mocked-LLM harness scenario): the model runs
 # live against your endpoint and must genuinely decide to chain the tools.
 #
 # Gates exercised: H1 (tool calls), H2 (streaming deltas), H3 (tool-result turn),
-# S3 (JSON arg fidelity). This is the single most important test — pass it and the
+# S3 (JSON arg fidelity). This is the single most important test - pass it and the
 # model can drive a SAM agent.
 
 name: two-tool-dependency

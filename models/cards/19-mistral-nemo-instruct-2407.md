@@ -1,31 +1,31 @@
-# 3. Qwen2.5 32B Instruct
+# 19. Mistral NeMo 12B
 
 | Field | Value |
 |---|---|
-| HF repo | `Qwen/Qwen2.5-32B-Instruct` |
-| Params (active) | 32B (32B) |
+| HF repo | `mistralai/Mistral-Nemo-Instruct-2407` |
+| Params (active) | 12B (12B) |
 | Context window | 128,000 tokens |
 | Native tool calling | **yes** |
-| Tool-calling grade | **excellent** |
-| Benchmark | Native Hermes-style FC (vLLM) |
+| Tool-calling grade | **good** |
+| Benchmark | BFCL Function-Calling tier (open-mistral-nemo-2407-FC) |
 | License | Apache-2.0 |
-| Best SAM role | orchestrator |
-| vLLM tool parser | `hermes` |
+| Best SAM role | leaf-agent |
+| vLLM tool parser | `mistral` |
 
 ## SAM fit
 
-Production-proven tool calling. Safe for orchestrator roles.
+Works; occasional JSON-argument quirks. Validate S3 on your quant.
 
-- **Hard gates (H1 tool calls / H2 streaming / H3 tool-result turns):** expected PASS - verify on your stack.
+- **Hard gates (H1 tool calls / H2 streaming / H3 tool-result turns):** works but validate JSON-arg fidelity.
 - **Context (S2):** 128,000 tokens - ample for orchestrator + multi-hop.
-- **Role:** suited to orchestration (routing, fan-out, synthesis).
-- **Notes:** Best single-GPU orchestrator; Apache-2.0.
+- **Role:** suited to domain/leaf agents (one or two tools, cost-sensitive, high volume).
+- **Notes:** Long context at small size.
 
 ## SAM `model:` block
 
 ```yaml
 model:
-  model: openai/Qwen/Qwen2.5-32B-Instruct
+  model: openai/mistralai/Mistral-Nemo-Instruct-2407
   api_base: ${LLM_API_BASE}         # your OpenAI-compatible endpoint, e.g. http://localhost:8000/v1
   api_key: ${LLM_API_KEY, sk-noop}
   parallel_tool_calls: true
@@ -35,17 +35,17 @@ model:
 ## Serve it (vLLM)
 
 ```bash
-vllm serve Qwen/Qwen2.5-32B-Instruct \
+vllm serve mistralai/Mistral-Nemo-Instruct-2407 \
   --host 0.0.0.0 --port 8000 \
   --enable-auto-tool-choice \
-  --tool-call-parser hermes \
+  --tool-call-parser mistral \
   --max-model-len 128000
 ```
 
 ## Validate
 
 ```bash
-export SAM_TEST_MODEL="openai/Qwen/Qwen2.5-32B-Instruct"
+export SAM_TEST_MODEL="openai/mistralai/Mistral-Nemo-Instruct-2407"
 export SAM_TEST_API_BASE="http://localhost:8000/v1"
 ./scripts/probe.sh && ./scripts/run-sam-scenario.sh two-tool-dependency
 ```

@@ -6,7 +6,7 @@ model through the real agent tool-calling loop with a DEPENDENT chain:
 
 A model that fakes tool calling cannot pass, because it has no way to invent the
 correct warehouse code ("WH-DK-02") without actually receiving lookup_order's
-result and passing it back — which is exactly SAM's H3 (tool-result turn).
+result and passing it back - which is exactly SAM's H3 (tool-result turn).
 
 Wire these as SAM Python tools (see tests/configs/agent.yaml). Signatures follow
 SAM's function-based tool convention: async, keyword args matching the schema,

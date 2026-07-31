@@ -1,16 +1,16 @@
-# Methodology — How These Conclusions Were Derived
+# Methodology - How These Conclusions Were Derived
 
 This document exists so the requirements are auditable. Every claim in [requirements.md](requirements.md) traces to a specific place in the SAM codebase (`solace-agent-mesh-go`) or the official SAM documentation. Nothing here is inferred from a model vendor's marketing.
 
 ## Sources
 
-1. **`internal/llm/client.go`** — the `llm.Client` interface and its request/response types. This is the contract the entire agent core programs against. It is the single most authoritative artifact: whatever the interface requires of a model, a model must provide.
-2. **`internal/llm/bifrost.go`** — the Bifrost-backed implementation. Shows how SAM's abstract request maps to the wire (e.g. how `ToolChoice` becomes a Bifrost `ChatToolChoice`).
-3. **`internal/agentcore/agent.go`** + `auto_continue.go` — the multi-turn tool-calling loop, streaming reassembly, and parallel-tool ordering.
-4. **`internal/agentcore/structured/`** — the structured-output / forced-tool paths that rely on `tool_choice`.
-5. **`internal/samapp/model.go`** — how model config YAML is parsed (`knownProviders`, `knownModelConfigKeys`, `nonCompletionKeys`), which defines exactly which config keys are honored.
-6. **`internal/llm/modelinfo/modelinfo.go`** — the static context-window table SAM ships, which reveals the model families SAM's authors already track and the context sizes assumed.
-7. **SAM docs** — `docs/documentation/installing/configure.md` (LLM provider section) and `airgap.md`, which state the `openai/` + `api_base` protocol-vs-backend rule and OpenAI-compatible-gateway support.
+1. **`internal/llm/client.go`** - the `llm.Client` interface and its request/response types. This is the contract the entire agent core programs against. It is the single most authoritative artifact: whatever the interface requires of a model, a model must provide.
+2. **`internal/llm/bifrost.go`** - the Bifrost-backed implementation. Shows how SAM's abstract request maps to the wire (e.g. how `ToolChoice` becomes a Bifrost `ChatToolChoice`).
+3. **`internal/agentcore/agent.go`** + `auto_continue.go` - the multi-turn tool-calling loop, streaming reassembly, and parallel-tool ordering.
+4. **`internal/agentcore/structured/`** - the structured-output / forced-tool paths that rely on `tool_choice`.
+5. **`internal/samapp/model.go`** - how model config YAML is parsed (`knownProviders`, `knownModelConfigKeys`, `nonCompletionKeys`), which defines exactly which config keys are honored.
+6. **`internal/llm/modelinfo/modelinfo.go`** - the static context-window table SAM ships, which reveals the model families SAM's authors already track and the context sizes assumed.
+7. **SAM docs** - `docs/documentation/installing/configure.md` (LLM provider section) and `airgap.md`, which state the `openai/` + `api_base` protocol-vs-backend rule and OpenAI-compatible-gateway support.
 
 ## Requirement → evidence map
 
@@ -48,11 +48,11 @@ Remove any one of H1/H2/H3 and this loop cannot complete a single tool-using tas
 
 ## Why compatibility is model-gated, not SAM-gated
 
-SAM's provider layer (Bifrost/LiteLLM) already speaks to 19 named providers and any OpenAI-compatible endpoint. So SAM will happily *send* a tool-calling request to any of the 20 shortlisted models. Whether the model *answers correctly* — emits well-formed streaming tool calls and uses tool results — is a property of the model + its serving stack. Hence the shortlist ranks models by that property, and the harness validates it per-stack.
+SAM's provider layer (Bifrost/LiteLLM) already speaks to 19 named providers and any OpenAI-compatible endpoint. So SAM will happily *send* a tool-calling request to any of the shortlisted models. Whether the model *answers correctly* - emits well-formed streaming tool calls and uses tool results - is a property of the model + its serving stack. Hence the shortlist ranks models by that property, and the harness validates it per-stack.
 
 ## Limits of this analysis
 
-- Tool-calling **grades** in the shortlist are from community and vendor reports as of mid-2026, not from running all 20 through the harness in one lab. They're a prior, not a measurement. The harness turns the prior into a measurement for *your* stack.
+- Tool-calling **grades** in the shortlist are from community and vendor reports as of mid-2026, not from running all of them through the harness in one lab. They're a prior, not a measurement. The harness turns the prior into a measurement for *your* stack.
 - Context windows are commonly-served defaults; several models support more with RoPE scaling at some quality cost.
-- Licenses change and vary by variant — always check the specific checkpoint's card.
+- Licenses change and vary by variant - always check the specific checkpoint's card.
 - The SAM codebase evolves. The evidence citations are accurate as of the commit present when this repo was authored (`internal/llm/client.go` interface shape). Re-check against the current `client.go` if in doubt.

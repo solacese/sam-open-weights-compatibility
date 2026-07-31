@@ -5,7 +5,9 @@
 | HF repo | `Qwen/Qwen2.5-72B-Instruct` |
 | Params (active) | 72B (72B) |
 | Context window | 128,000 tokens |
+| Native tool calling | **yes** |
 | Tool-calling grade | **excellent** |
+| Benchmark | Native Hermes-style FC (vLLM); superseded on BFCL by Qwen3 |
 | License | Qwen |
 | Best SAM role | orchestrator |
 | vLLM tool parser | `hermes` |
@@ -14,8 +16,8 @@
 
 Production-proven tool calling. Safe for orchestrator roles.
 
-- **Hard gates (H1 tool calls / H2 streaming / H3 tool-result turns):** expected PASS — verify on your stack.
-- **Context (S2):** 128,000 tokens — ample for orchestrator + multi-hop.
+- **Hard gates (H1 tool calls / H2 streaming / H3 tool-result turns):** expected PASS - verify on your stack.
+- **Context (S2):** 128,000 tokens - ample for orchestrator + multi-hop.
 - **Role:** suited to orchestration (routing, fan-out, synthesis).
 - **Notes:** Strong multi-tool and parallel calls.
 
@@ -30,7 +32,6 @@ model:
   temperature: 0.2
   max_tokens: 4096
 ```
-
 ## Serve it (vLLM)
 
 ```bash

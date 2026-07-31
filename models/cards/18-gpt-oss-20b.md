@@ -1,50 +1,51 @@
-# 16. Llama 3.1 8B Instruct
+# 18. gpt-oss 20b
 
 | Field | Value |
 |---|---|
-| HF repo | `meta-llama/Llama-3.1-8B-Instruct` |
-| Params (active) | 8B (8B) |
+| HF repo | `openai/gpt-oss-20b` |
+| Params (active) | 21B (3.6B) |
 | Context window | 128,000 tokens |
+| Native tool calling | **yes** |
 | Tool-calling grade | **good** |
-| License | Llama 3.1 Community |
+| Benchmark | Agentic-first; ~o3-mini class (vendor); runs in ~16GB |
+| License | Apache-2.0 |
 | Best SAM role | leaf-agent |
-| vLLM tool parser | `llama3_json` |
+| vLLM tool parser | `openai` |
 
 ## SAM fit
 
 Works; occasional JSON-argument quirks. Validate S3 on your quant.
 
-- **Hard gates (H1 tool calls / H2 streaming / H3 tool-result turns):** REQUIRES harness validation — do not assume.
-- **Context (S2):** 128,000 tokens — ample for orchestrator + multi-hop.
+- **Hard gates (H1 tool calls / H2 streaming / H3 tool-result turns):** works but validate JSON-arg fidelity.
+- **Context (S2):** 128,000 tokens - ample for orchestrator + multi-hop.
 - **Role:** suited to domain/leaf agents (one or two tools, cost-sensitive, high volume).
-- **Notes:** Ubiquitous small model; in SAM modelinfo.
+- **Notes:** OpenAI open-weight small; harmony format required; vLLM openai parser.
 
 ## SAM `model:` block
 
 ```yaml
 model:
-  model: openai/meta-llama/Llama-3.1-8B-Instruct
+  model: openai/openai/gpt-oss-20b
   api_base: ${LLM_API_BASE}         # your OpenAI-compatible endpoint, e.g. http://localhost:8000/v1
   api_key: ${LLM_API_KEY, sk-noop}
   parallel_tool_calls: true
   temperature: 0.2
   max_tokens: 4096
 ```
-
 ## Serve it (vLLM)
 
 ```bash
-vllm serve meta-llama/Llama-3.1-8B-Instruct \
+vllm serve openai/gpt-oss-20b \
   --host 0.0.0.0 --port 8000 \
   --enable-auto-tool-choice \
-  --tool-call-parser llama3_json \
+  --tool-call-parser openai \
   --max-model-len 128000
 ```
 
 ## Validate
 
 ```bash
-export SAM_TEST_MODEL="openai/meta-llama/Llama-3.1-8B-Instruct"
+export SAM_TEST_MODEL="openai/openai/gpt-oss-20b"
 export SAM_TEST_API_BASE="http://localhost:8000/v1"
 ./scripts/probe.sh && ./scripts/run-sam-scenario.sh two-tool-dependency
 ```

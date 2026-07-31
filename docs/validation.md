@@ -2,8 +2,8 @@
 
 Grades in the [shortlist](shortlist.md) are starting points. This is how you get a definitive **yes/no** for a specific model, quant, and serving stack. Two levels:
 
-1. **`probe.sh`** — talks straight to your OpenAI-compatible endpoint with `curl`. No SAM required. Checks the three hard gates in isolation. Fast, catches most failures.
-2. **`run-sam-scenario.sh`** — runs a real SAM agent through a two-tool scenario. This is the ground truth: it exercises the actual agent loop, streaming reassembly, and multi-turn tool-result handling that a raw probe can't fully reproduce.
+1. **`probe.sh`** - talks straight to your OpenAI-compatible endpoint with `curl`. No SAM required. Checks the three hard gates in isolation. Fast, catches most failures.
+2. **`run-sam-scenario.sh`** - runs a real SAM agent through a two-tool scenario. This is the ground truth: it exercises the actual agent loop, streaming reassembly, and multi-turn tool-result handling that a raw probe can't fully reproduce.
 
 Always run `probe.sh` first (cheap), then confirm with the SAM scenario.
 
@@ -23,7 +23,7 @@ export SAM_TEST_API_KEY="sk-noop"                          # any value if server
 
 ---
 
-## Level 1 — the endpoint probe
+## Level 1 - the endpoint probe
 
 ```bash
 ./scripts/probe.sh
@@ -37,20 +37,20 @@ It runs three checks and prints a PASS/FAIL per hard gate:
 | **2. Streaming tool call** | H2 | Same, with `"stream": true` | SSE chunks carry `delta.tool_calls[]`; concatenated `arguments` fragments parse as valid JSON |
 | **3. Tool-result turn** | H3 | The assistant tool_call turn + a `tool` role result, asks for a final answer | Response *uses* the returned value (e.g. mentions the temperature) and does not re-call the tool or hallucinate |
 
-A model that fails any of these is **not SAM-compatible** on this stack — fix the serving (tool parser, template, quant) or pick another model.
+A model that fails any of these is **not SAM-compatible** on this stack - fix the serving (tool parser, template, quant) or pick another model.
 
 ### Reading failures
 
 - **No `tool_calls` at all** → missing/wrong `--tool-call-parser` (vLLM) or the model genuinely can't tool-call. Fails H1.
-- **Tool call in non-stream but not stream** → server doesn't emit tool-call deltas while streaming. Fails H2 — a common vLLM/SGLang flag issue.
+- **Tool call in non-stream but not stream** → server doesn't emit tool-call deltas while streaming. Fails H2 - a common vLLM/SGLang flag issue.
 - **Malformed JSON in `arguments`** → quant too aggressive or template mismatch. Borderline S3; will cause dispatch errors in SAM.
 - **Ignores the tool result / re-calls the tool** → chat template can't represent the `tool` turn. Fails H3.
 
 ---
 
-## Level 2 — the SAM two-tool scenario
+## Level 2 - the SAM two-tool scenario
 
-This is the real test. The scenario forces a **dependent** two-step tool chain: the agent must call `lookup_order`, then call `get_shipping_estimate` **using the warehouse code returned by the first call**. A model that fakes tool calling cannot pass this — it has no way to invent the correct warehouse code.
+This is the real test. The scenario forces a **dependent** two-step tool chain: the agent must call `lookup_order`, then call `get_shipping_estimate` **using the warehouse code returned by the first call**. A model that fakes tool calling cannot pass this - it has no way to invent the correct warehouse code.
 
 ```bash
 ./scripts/run-sam-scenario.sh
@@ -67,7 +67,7 @@ Under the hood this:
 
 | Scenario file | Proves | Gate(s) |
 |---|---|---|
-| `two-tool-dependency.yaml` | Dependent multi-hop tool use — the core agent loop | H1, H2, H3, S3 |
+| `two-tool-dependency.yaml` | Dependent multi-hop tool use - the core agent loop | H1, H2, H3, S3 |
 | `forced-tool.yaml` | `tool_choice: required` is honored (mandatory call) | S1 |
 | `parallel-tools.yaml` | Two independent tools in one turn, results ordered | N1 |
 
@@ -85,9 +85,9 @@ Run a specific scenario:
 | probe.sh | SAM scenario | Verdict |
 |---|---|---|
 | All PASS | two-tool PASS | ✅ **Production-viable** on this stack. Run `forced-tool` + `parallel-tools` to grade S1/N1. |
-| All PASS | two-tool FAIL | ⚠ Streaming/multi-turn issue the probe missed — check tool parser + template. Not yet viable. |
-| H1 PASS, H2 FAIL | — | ❌ Streaming tool calls broken. Fix serving flags or don't stream (loses SAM's default UX). |
-| H1 FAIL | — | ❌ Model/stack can't tool-call. Not compatible. |
+| All PASS | two-tool FAIL | ⚠ Streaming/multi-turn issue the probe missed - check tool parser + template. Not yet viable. |
+| H1 PASS, H2 FAIL | - | ❌ Streaming tool calls broken. Fix serving flags or don't stream (loses SAM's default UX). |
+| H1 FAIL | - | ❌ Model/stack can't tool-call. Not compatible. |
 
 ## Recording results
 

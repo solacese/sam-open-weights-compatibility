@@ -1,50 +1,51 @@
-# 18. DeepSeek-R1
+# 8. DeepSeek-V3.1
 
 | Field | Value |
 |---|---|
-| HF repo | `deepseek-ai/DeepSeek-R1` |
+| HF repo | `deepseek-ai/DeepSeek-V3.1` |
 | Params (active) | 671B (37B) |
 | Context window | 128,000 tokens |
-| Tool-calling grade | **good** |
+| Native tool calling | **yes** |
+| Tool-calling grade | **very-good** |
+| Benchmark | Native FC; needs deepseek_v31 parser + template |
 | License | DeepSeek |
-| Best SAM role | reasoning |
-| vLLM tool parser | `deepseek_v3` |
+| Best SAM role | orchestrator |
+| vLLM tool parser | `deepseek_v31` |
 
 ## SAM fit
 
-Works; occasional JSON-argument quirks. Validate S3 on your quant.
+Reliable tool calling. Good for orchestrator or domain agents.
 
-- **Hard gates (H1 tool calls / H2 streaming / H3 tool-result turns):** REQUIRES harness validation — do not assume.
-- **Context (S2):** 128,000 tokens — ample for orchestrator + multi-hop.
+- **Hard gates (H1 tool calls / H2 streaming / H3 tool-result turns):** expected PASS - verify on your stack.
+- **Context (S2):** 128,000 tokens - ample for orchestrator + multi-hop.
 - **Role:** suited to orchestration (routing, fan-out, synthesis).
-- **Notes:** Reasoning-forward; pair with thinking budget.
+- **Notes:** MoE low active params; strong tool+reasoning; use V3.1 template.
 
 ## SAM `model:` block
 
 ```yaml
 model:
-  model: openai/deepseek-ai/DeepSeek-R1
+  model: openai/deepseek-ai/DeepSeek-V3.1
   api_base: ${LLM_API_BASE}         # your OpenAI-compatible endpoint, e.g. http://localhost:8000/v1
   api_key: ${LLM_API_KEY, sk-noop}
   parallel_tool_calls: true
   temperature: 0.2
   max_tokens: 4096
 ```
-
 ## Serve it (vLLM)
 
 ```bash
-vllm serve deepseek-ai/DeepSeek-R1 \
+vllm serve deepseek-ai/DeepSeek-V3.1 \
   --host 0.0.0.0 --port 8000 \
   --enable-auto-tool-choice \
-  --tool-call-parser deepseek_v3 \
+  --tool-call-parser deepseek_v31 \
   --max-model-len 128000
 ```
 
 ## Validate
 
 ```bash
-export SAM_TEST_MODEL="openai/deepseek-ai/DeepSeek-R1"
+export SAM_TEST_MODEL="openai/deepseek-ai/DeepSeek-V3.1"
 export SAM_TEST_API_BASE="http://localhost:8000/v1"
 ./scripts/probe.sh && ./scripts/run-sam-scenario.sh two-tool-dependency
 ```

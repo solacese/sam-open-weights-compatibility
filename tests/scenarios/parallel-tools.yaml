@@ -1,4 +1,4 @@
-# Scenario: parallel tool calls — validates N1 (nice-to-have).
+# Scenario: parallel tool calls - validates N1 (nice-to-have).
 #
 # SAM handles multiple tool calls in one assistant turn and preserves their
 # relative result order (internal/agentcore/agent.go). This checks the model
