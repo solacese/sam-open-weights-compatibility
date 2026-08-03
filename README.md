@@ -248,7 +248,7 @@ Each verdict is cross-checked against three primary sources: the BFCL tier (nati
 
 The table below is **sorted by BFCL overall accuracy, highest first**. `(FC)` = function-calling variant, `(P)` = prompt variant (highest-scoring variant shown). `(V4)` = the live [BFCL V4 board](https://gorilla.cs.berkeley.edu/leaderboard.html) (observed 2026-07-31); `(V3)` = the archived V3 `data_overall.csv` snapshot (2025-03), used for the checkpoints V4 pruned. `n/a` means the model was **never submitted to BFCL** in any board version, not that it is bad at tool calling. Scores are absolute (BFCL is deliberately hard: a 30-40% here is a capable tool caller, not a failing grade).
 
-> **Read this before trusting the order.** A raw score sort is *not* a SAM-fitness ranking, for two reasons. (1) **V3 and V4 scores are not directly comparable**: BFCL re-scores between versions (DeepSeek-R1-0528 moved from 63.79 to 48.97 between two 2025 snapshots alone), so a V3 61 and a V4 48 are not a clean 13-point gap. (2) **A high score does not mean SAM can use the model.** Gemma 2 27B scores 52.21 but only in BFCL's *prompt* mode; it has no vLLM tool parser and no `tool` role, so it fails SAM's first hard gate regardless of the number. The **SAM verdict** column, not the score, is what governs whether SAM can drive the model. For the SAM-fitness ranking, use [the shortlist](docs/shortlist.md); this table is the raw benchmark evidence behind it.
+> **Read this before trusting the order.** A raw score sort is *not* a SAM-fitness ranking, for two reasons. (1) **V3 and V4 scores are not directly comparable**: BFCL re-scores between versions (DeepSeek-R1-0528 moved from 63.79 to 48.97 between two 2025 snapshots alone), so a V3 61 and a V4 48 are not a clean 13-point gap. (2) **A high score does not mean SAM can use the model.** The **SAM verdict** column, not the score, is what governs whether SAM can drive the model. This table only lists models SAM can actually drive; the three `unsupported` models (Gemma 2 27B, Phi-4, Yi-1.5) are omitted because they fail SAM's first hard gate regardless of their score. For the SAM-fitness ranking, use [the shortlist](docs/shortlist.md); this table is the raw benchmark evidence behind it.
 
 | Model | BFCL score | BFCL tier | vLLM parser | HF `tool` role | SAM verdict |
 |---|---|---|---|---|---|
@@ -261,14 +261,12 @@ The table below is **sorted by BFCL overall accuracy, highest first**. `(FC)` = 
 | DeepSeek-V3.1 | 57.23 (FC, V3) | Function Calling | `deepseek_v31` | yes | very-good |
 | Qwen2.5 7B Instruct | 56.70 (FC, V3) | Function Calling | `hermes` | yes | good |
 | Llama 3.1 70B Instruct | 54.19 (P, V3) | Function Calling | `llama3_json` | yes | excellent |
-| Gemma 2 27B Instruct | 52.21 (P, V3) | Prompt only | none | no | unsupported |
 | Mixtral 8x22B Instruct | 50.36 (P, V3) | not listed | `mistral` | yes | good |
 | Command R+ (legacy) | 49.35 (FC, V3) | Function Calling | none | yes | validate-first |
 | Qwen3 32B | 48.71 (FC, V4) | Function Calling | `hermes` | yes | excellent |
 | Command A (03-2025) | 46.49 (FC, V4) | Function Calling | `cohere_command3` | yes | very-good |
 | Mistral Large 2 (2411) | 38.37 (FC, V4) | Function Calling | `mistral` | yes | excellent |
 | Llama 3.3 70B Instruct | 31.9 (FC, V4) | Function Calling | `llama3_json` | yes | excellent |
-| Phi-4 (14B) | 28.79 (P, V4) | Prompt only | none | no | unsupported |
 | Mistral NeMo 12B | 27.63 (FC, V4) | Function Calling | `mistral` | yes | good |
 | Llama 3.1 8B Instruct | 25.83 (P, V4) | Function Calling | `llama3_json` | yes | good |
 | Llama 3.1 405B Instruct | n/a | Function Calling | `llama3_json` | yes | excellent |
@@ -276,13 +274,29 @@ The table below is **sorted by BFCL overall accuracy, highest first**. `(FC)` = 
 | Mistral Small 3 (24B) | n/a | Function Calling | `mistral` | yes | very-good |
 | Qwen2.5-Coder 32B | n/a | Function Calling | `hermes` | yes | very-good |
 | gpt-oss 20b | n/a | Function Calling | `openai` | yes (harmony) | good |
-| Yi-1.5 34B Chat | n/a | not in FC tier | none | no | unsupported |
 
 Notes on specific rows:
 
 - **DeepSeek-V3.1** carries the score for the original **DeepSeek-V3** (57.23, V3); BFCL never listed a distinct V3.1 checkpoint, so treat it as an indicative prior for the family.
 - **DeepSeek-R1 (0528)** tops the numeric list at 63.79 but is still `validate-first`: on stock vLLM it serves through the base-R1 prompt path (`deepseek_v3` parser, conditional `tool` role), so native tool calling is not guaranteed without validating your serve.
-- **Gemma 2, Phi-4, Yi-1.5** appear mid-table on score but are `unsupported`: no vLLM tool parser and no `tool` role means they fail SAM's first hard gate. Phi-4's and Gemma's numbers are *prompt-mode* pseudo-JSON, not the native `tool_calls` SAM's loop consumes.
-- The six **n/a** models (Llama 3.1 405B, both gpt-oss, Mistral Small 3, Qwen2.5-Coder 32B, and Yi-1.5) were never submitted to BFCL; their SAM verdict rests on the parser + `tool` role columns, verified per [`docs/benchmarks.md`](docs/benchmarks.md).
+- The five **n/a** models (Llama 3.1 405B, both gpt-oss, Mistral Small 3, and Qwen2.5-Coder 32B) were never submitted to BFCL; their SAM verdict rests on the parser + `tool` role columns, verified per [`docs/benchmarks.md`](docs/benchmarks.md).
+- **Three models are omitted entirely** because they are `unsupported` (no vLLM tool parser, no `tool` role, failing SAM's first hard gate): Gemma 2 27B, Phi-4, Yi-1.5 34B. Their BFCL numbers, where they exist, are *prompt-mode* pseudo-JSON, not the native `tool_calls` SAM's loop consumes. See [`docs/benchmarks.md`](docs/benchmarks.md) for the full list and the alternatives to use.
 
 > Leaderboards move and these are documentation-backed priors, not per-stack measurements. The [validation harness](docs/validation.md) is the source of truth for your quant and serving path.
+
+### Best pick per provider
+
+If you're committed to a particular model family, this is the single **best SAM-usable** open-weights model each provider ships in this set. "Best" here means best SAM verdict first, BFCL score as the tiebreak - not raw score, because the highest-scoring checkpoint in a family is sometimes the one SAM can't drive natively.
+
+| Provider | Country | Best SAM pick | BFCL score | SAM verdict | Best role |
+|---|---|---|---|---|---|
+| Alibaba (Qwen) | China | Qwen2.5 72B Instruct | 61.31 (P, V3) | excellent | orchestrator |
+| Meta | USA | Llama 3.1 70B Instruct | 54.19 (P, V3) | excellent | orchestrator |
+| Mistral AI | France | Mistral Large 2 (2411) | 38.37 (FC, V4) | excellent | orchestrator |
+| Zhipu AI (Z.ai) | China | GLM-4.6 | 72.38 (FC, V4) | very-good | orchestrator |
+| Moonshot AI | China | Kimi-K2 Instruct | 59.06 (FC, V4) | very-good | orchestrator |
+| DeepSeek | China | DeepSeek-V3.1 | 57.23 (FC, V3) | very-good | orchestrator |
+| Cohere | Canada | Command A (03-2025) | 46.49 (FC, V4) | very-good | compliance-rag |
+| OpenAI | USA | gpt-oss 120b | n/a | very-good | orchestrator |
+
+> **Google, Microsoft, and 01.AI are absent by design.** Their only open-weights models in this set (Gemma 2 27B, Phi-4, Yi-1.5 34B) are `unsupported` - none can emit the native tool calls SAM requires - so there is no SAM-usable pick to list. Use another provider's model instead.

@@ -11,7 +11,7 @@
 | Context window | 128,000 tokens |
 | Native tool calling | **yes** |
 | Tool-calling grade | **very-good** |
-| BFCL overall acc | 57.23 (FC, V3, orig-V3) |
+| BFCL overall acc | 57.23 (FC, V3) |
 | Benchmark | Native FC; needs deepseek_v31 parser + template |
 | License | DeepSeek |
 | Best SAM role | orchestrator |
