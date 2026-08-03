@@ -3,6 +3,8 @@
 | Field | Value |
 |---|---|
 | HF repo | `mistralai/Mistral-Large-Instruct-2411` |
+| Organization | Mistral AI |
+| Country of origin | France |
 | Params (active) | 123B (123B) |
 | Context window | 128,000 tokens |
 | Native tool calling | **yes** |

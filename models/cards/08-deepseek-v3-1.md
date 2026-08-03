@@ -3,6 +3,8 @@
 | Field | Value |
 |---|---|
 | HF repo | `deepseek-ai/DeepSeek-V3.1` |
+| Organization | DeepSeek |
+| Country of origin | China |
 | Params (active) | 671B (37B) |
 | Context window | 128,000 tokens |
 | Native tool calling | **yes** |

@@ -3,6 +3,8 @@
 | Field | Value |
 |---|---|
 | HF repo | `mistralai/Mistral-Small-24B-Instruct-2501` |
+| Organization | Mistral AI |
+| Country of origin | France |
 | Params (active) | 24B (24B) |
 | Context window | 32,000 tokens |
 | Native tool calling | **yes** |

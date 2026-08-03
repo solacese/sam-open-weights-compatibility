@@ -5,6 +5,8 @@
 | Field | Value |
 |---|---|
 | HF repo | `01-ai/Yi-1.5-34B-Chat` |
+| Organization | 01.AI |
+| Country of origin | China |
 | Params (active) | 34B (34B) |
 | Context window | 32,000 tokens |
 | Native tool calling | **no** |

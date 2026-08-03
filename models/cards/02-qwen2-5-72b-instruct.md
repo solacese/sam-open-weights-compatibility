@@ -3,6 +3,8 @@
 | Field | Value |
 |---|---|
 | HF repo | `Qwen/Qwen2.5-72B-Instruct` |
+| Organization | Alibaba (Qwen team) |
+| Country of origin | China |
 | Params (active) | 72B (72B) |
 | Context window | 128,000 tokens |
 | Native tool calling | **yes** |

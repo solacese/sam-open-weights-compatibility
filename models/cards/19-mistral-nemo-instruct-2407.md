@@ -3,6 +3,8 @@
 | Field | Value |
 |---|---|
 | HF repo | `mistralai/Mistral-Nemo-Instruct-2407` |
+| Organization | Mistral AI + NVIDIA |
+| Country of origin | France |
 | Params (active) | 12B (12B) |
 | Context window | 128,000 tokens |
 | Native tool calling | **yes** |

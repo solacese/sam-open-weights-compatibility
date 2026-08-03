@@ -3,6 +3,8 @@
 | Field | Value |
 |---|---|
 | HF repo | `CohereForAI/c4ai-command-a-03-2025` |
+| Organization | Cohere |
+| Country of origin | Canada |
 | Params (active) | 111B (111B) |
 | Context window | 256,000 tokens |
 | Native tool calling | **yes** |

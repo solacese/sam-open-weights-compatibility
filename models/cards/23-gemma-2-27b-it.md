@@ -5,6 +5,8 @@
 | Field | Value |
 |---|---|
 | HF repo | `google/gemma-2-27b-it` |
+| Organization | Google |
+| Country of origin | USA |
 | Params (active) | 27B (27B) |
 | Context window | 8,000 tokens |
 | Native tool calling | **no** |

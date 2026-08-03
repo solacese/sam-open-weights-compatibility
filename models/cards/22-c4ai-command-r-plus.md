@@ -5,6 +5,8 @@
 | Field | Value |
 |---|---|
 | HF repo | `CohereForAI/c4ai-command-r-plus` |
+| Organization | Cohere |
+| Country of origin | Canada |
 | Params (active) | 104B (104B) |
 | Context window | 128,000 tokens |
 | Native tool calling | **partial** |

@@ -3,6 +3,8 @@
 | Field | Value |
 |---|---|
 | HF repo | `meta-llama/Llama-3.1-405B-Instruct` |
+| Organization | Meta |
+| Country of origin | USA |
 | Params (active) | 405B (405B) |
 | Context window | 128,000 tokens |
 | Native tool calling | **yes** |

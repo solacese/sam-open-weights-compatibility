@@ -103,6 +103,8 @@ vLLM has **no tool-call parser** for this model, so SAM tool calling will not wo
 | Field | Value |
 |---|---|
 | HF repo | `{repo}` |
+| Organization | {row.get('organization', 'n/a')} |
+| Country of origin | {row.get('country', 'n/a')} |
 | Params (active) | {row['params']} ({row['active_params']}) |
 | Context window | {ctx:,} tokens |
 | Native tool calling | **{native}** |

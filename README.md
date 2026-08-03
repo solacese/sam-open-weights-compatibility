@@ -165,6 +165,24 @@ scripts/
   run-sam-scenario.sh - full SAM agent validation run
 ```
 
+## Who makes these models
+
+Open-weights models come from labs across the US, China, Europe, and Canada. Country of origin can matter for procurement, data-residency, or export-control policy, so it is called out per model in each [spec card](models/cards/) and in [`models/index.csv`](models/index.csv). Summary:
+
+| Organization | Country | Models here |
+|---|---|---|
+| Meta | USA | Llama 3.3 70B, Llama 3.1 405B/70B/8B |
+| OpenAI | USA | gpt-oss 120b, gpt-oss 20b |
+| Google | USA | Gemma 2 27B (not recommended) |
+| Microsoft | USA | Phi-4 (not recommended) |
+| Mistral AI | France | Mistral Large 2, Mixtral 8x22B, Mistral Small 3, Mistral NeMo (with NVIDIA) |
+| Cohere | Canada | Command A, Command R+ (legacy) |
+| Alibaba (Qwen team) | China | Qwen2.5 72B/32B/14B/7B, Qwen3 32B, Qwen2.5-Coder 32B |
+| DeepSeek | China | DeepSeek-V3.1, DeepSeek-R1 (0528) |
+| Zhipu AI (Z.ai) | China | GLM-4.6 |
+| Moonshot AI | China | Kimi-K2 |
+| 01.AI | China | Yi-1.5 34B (not recommended) |
+
 ## Benchmark results
 
 The one capability SAM depends on is reliable tool calling, so the ranking below is grounded in the **Berkeley Function-Calling Leaderboard (BFCL)** rather than general benchmarks (MMLU, etc.). A model that scores high on MMLU but sits in BFCL's *Prompt-only* tier is a poor SAM fit, because it cannot emit native tool calls.

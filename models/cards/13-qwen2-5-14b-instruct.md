@@ -3,6 +3,8 @@
 | Field | Value |
 |---|---|
 | HF repo | `Qwen/Qwen2.5-14B-Instruct` |
+| Organization | Alibaba (Qwen team) |
+| Country of origin | China |
 | Params (active) | 14B (14B) |
 | Context window | 128,000 tokens |
 | Native tool calling | **yes** |

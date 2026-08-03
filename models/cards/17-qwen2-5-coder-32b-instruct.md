@@ -3,6 +3,8 @@
 | Field | Value |
 |---|---|
 | HF repo | `Qwen/Qwen2.5-Coder-32B-Instruct` |
+| Organization | Alibaba (Qwen team) |
+| Country of origin | China |
 | Params (active) | 32B (32B) |
 | Context window | 128,000 tokens |
 | Native tool calling | **yes** |

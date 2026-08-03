@@ -3,6 +3,8 @@
 | Field | Value |
 |---|---|
 | HF repo | `openai/gpt-oss-20b` |
+| Organization | OpenAI |
+| Country of origin | USA |
 | Params (active) | 21B (3.6B) |
 | Context window | 128,000 tokens |
 | Native tool calling | **yes** |

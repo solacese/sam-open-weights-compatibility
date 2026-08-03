@@ -3,6 +3,8 @@
 | Field | Value |
 |---|---|
 | HF repo | `mistralai/Mixtral-8x22B-Instruct-v0.1` |
+| Organization | Mistral AI |
+| Country of origin | France |
 | Params (active) | 141B (39B) |
 | Context window | 64,000 tokens |
 | Native tool calling | **yes** |

@@ -3,6 +3,8 @@
 | Field | Value |
 |---|---|
 | HF repo | `openai/gpt-oss-120b` |
+| Organization | OpenAI |
+| Country of origin | USA |
 | Params (active) | 117B (5.1B) |
 | Context window | 128,000 tokens |
 | Native tool calling | **yes** |

@@ -3,6 +3,8 @@
 | Field | Value |
 |---|---|
 | HF repo | `moonshotai/Kimi-K2-Instruct` |
+| Organization | Moonshot AI |
+| Country of origin | China |
 | Params (active) | 1000B (32B) |
 | Context window | 128,000 tokens |
 | Native tool calling | **yes** |

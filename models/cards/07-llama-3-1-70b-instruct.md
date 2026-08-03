@@ -3,6 +3,8 @@
 | Field | Value |
 |---|---|
 | HF repo | `meta-llama/Llama-3.1-70B-Instruct` |
+| Organization | Meta |
+| Country of origin | USA |
 | Params (active) | 70B (70B) |
 | Context window | 128,000 tokens |
 | Native tool calling | **yes** |
