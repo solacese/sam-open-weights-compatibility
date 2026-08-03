@@ -164,3 +164,41 @@ scripts/
   probe.sh          - endpoint-only hard-gate probe (curl + jq)
   run-sam-scenario.sh - full SAM agent validation run
 ```
+
+## Benchmark results
+
+The one capability SAM depends on is reliable tool calling, so the ranking below is grounded in the **Berkeley Function-Calling Leaderboard (BFCL)** rather than general benchmarks (MMLU, etc.). A model that scores high on MMLU but sits in BFCL's *Prompt-only* tier is a poor SAM fit, because it cannot emit native tool calls.
+
+Each verdict is cross-checked against three primary sources: the BFCL tier (native **Function-Calling** vs **Prompt-only**), the **vLLM `--tool-call-parser`** (or `none` if vLLM ships no parser for it), and the model's **Hugging Face chat template** (does it define the `tool` role SAM needs for multi-turn tool results?). Full reasoning in [`docs/benchmarks.md`](docs/benchmarks.md).
+
+| Model | BFCL tier | vLLM parser | HF `tool` role | SAM verdict |
+|---|---|---|---|---|
+| Llama 3.3 70B Instruct | Function Calling | `llama3_json` | yes | excellent |
+| Qwen2.5 72B Instruct | Function Calling | `hermes` | yes | excellent |
+| Qwen2.5 32B Instruct | Function Calling | `hermes` | yes | excellent |
+| Qwen3 32B | Function Calling | `hermes` | yes | excellent |
+| Mistral Large 2 (2411) | Function Calling | `mistral` | yes | excellent |
+| Llama 3.1 405B Instruct | Function Calling | `llama3_json` | yes | excellent |
+| Llama 3.1 70B Instruct | Function Calling | `llama3_json` | yes | excellent |
+| DeepSeek-V3.1 | Function Calling | `deepseek_v31` | yes | very-good |
+| GLM-4.6 | Function Calling | `glm45` | yes | very-good |
+| gpt-oss 120b | Function Calling | `openai` | yes (harmony) | very-good |
+| Kimi-K2 Instruct | Function Calling | `kimi_k2` | yes | very-good |
+| Command A (03-2025) | Function Calling | `cohere_command3` | yes | very-good |
+| Qwen2.5 14B Instruct | Function Calling | `hermes` | yes | very-good |
+| Mixtral 8x22B Instruct | not listed | `mistral` | yes | good |
+| Mistral Small 3 (24B) | Function Calling | `mistral` | yes | very-good |
+| Qwen2.5 7B Instruct | Function Calling | `hermes` | yes | good |
+| Qwen2.5-Coder 32B | Function Calling | `hermes` | yes | very-good |
+| gpt-oss 20b | Function Calling | `openai` | yes (harmony) | good |
+| Mistral NeMo 12B | Function Calling | `mistral` | yes | good |
+| Llama 3.1 8B Instruct | Function Calling | `llama3_json` | yes | good |
+| DeepSeek-R1 (0528) | Prompt (base R1) | `deepseek_v3` | conditional | validate-first |
+| Command R+ (legacy) | Function Calling | none | yes | validate-first |
+| Gemma 2 27B Instruct | Prompt only | none | no | unsupported |
+| Phi-4 (14B) | Prompt only | none | no | unsupported |
+| Yi-1.5 34B Chat | not in FC tier | none | no | unsupported |
+
+**How to read it:** Function-Calling tier + a real vLLM parser + a `tool` role means SAM can drive the model's tool calls (verdicts `excellent`/`very-good`/`good`). A gap in any column drops the verdict: **Command R+** is FC-capable but has no current vLLM parser, so tool calling will not fire on a stock serve (use **Command A** instead). **Gemma 2, Phi-4, Yi-1.5** have no parser and no `tool` role and fail the first hard gate regardless of prompting.
+
+> Leaderboards move and these are documentation-backed priors, not per-stack measurements. The [validation harness](docs/validation.md) is the source of truth for your quant and serving path.
