@@ -288,15 +288,15 @@ Notes on specific rows:
 
 If you're committed to a particular model family, this is the single **best SAM-usable** open-weights model each provider ships in this set. "Best" here means best SAM verdict first, BFCL score as the tiebreak - not raw score, because the highest-scoring checkpoint in a family is sometimes the one SAM can't drive natively.
 
-| Provider | Country | Best SAM pick | BFCL score | SAM verdict | Best role |
+| Provider | Country | Best SAM pick | BFCL score | SAM verdict | Recommended hardware (4-bit) |
 |---|---|---|---|---|---|
-| Alibaba (Qwen) | China | Qwen2.5 72B Instruct | 61.31 (P, V3) | excellent | orchestrator |
-| Meta | USA | Llama 3.1 70B Instruct | 54.19 (P, V3) | excellent | orchestrator |
-| Mistral AI | France | Mistral Large 2 (2411) | 38.37 (FC, V4) | excellent | orchestrator |
-| Zhipu AI (Z.ai) | China | GLM-4.6 | 72.38 (FC, V4) | very-good | orchestrator |
-| Moonshot AI | China | Kimi-K2 Instruct | 59.06 (FC, V4) | very-good | orchestrator |
-| DeepSeek | China | DeepSeek-V3.1 | 57.23 (FC, V3) | very-good | orchestrator |
-| Cohere | Canada | Command A (03-2025) | 46.49 (FC, V4) | very-good | compliance-rag |
-| OpenAI | USA | gpt-oss 120b | n/a | very-good | orchestrator |
+| Alibaba (Qwen) | China | Qwen2.5 72B Instruct | 61.31 (P, V3) | excellent | 1x 48GB (A6000 / L40S) |
+| Meta | USA | Llama 3.1 70B Instruct | 54.19 (P, V3) | excellent | 1x 48GB (A6000 / L40S) |
+| Mistral AI | France | Mistral Large 2 (2411) | 38.37 (FC, V4) | excellent | 1x 80GB (A100 / H100) |
+| Zhipu AI (Z.ai) | China | GLM-4.6 | 72.38 (FC, V4) | very-good | 4x 80GB (A100 / H100) |
+| Moonshot AI | China | Kimi-K2 Instruct | 59.06 (FC, V4) | very-good | 8x 80GB (1x H100 node) |
+| DeepSeek | China | DeepSeek-V3.1 | 57.23 (FC, V3) | very-good | 8x 80GB (1x H100 node) |
+| Cohere | Canada | Command A (03-2025) | 46.49 (FC, V4) | very-good | 1x 80GB (A100 / H100) |
+| OpenAI | USA | gpt-oss 120b | n/a | very-good | 1x 80GB (A100 / H100) |
 
 > **Google, Microsoft, and 01.AI are absent by design.** Their only open-weights models in this set (Gemma 2 27B, Phi-4, Yi-1.5 34B) are `unsupported` - none can emit the native tool calls SAM requires - so there is no SAM-usable pick to list. Use another provider's model instead.
