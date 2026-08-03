@@ -12,35 +12,37 @@ The one capability SAM depends on is reliable tool calling, so the benchmark tha
 
 <!-- BENCHMARK_TABLE_START -->
 
-The verdict per model, cross-checked against all three sources. "BFCL tier" is whether the model appears in BFCL's native **Function-Calling** list or only its **Prompt** list (prompt-only = no native FC). "vLLM parser" is the `--tool-call-parser` value, or `none` if vLLM ships no parser for it. "HF `tool` role" is whether the model's chat template defines the tool-calling turns SAM needs (H3).
+The verdict per model, cross-checked against all three sources. "BFCL V4" is the overall accuracy on the live [Berkeley Function-Calling Leaderboard V4](https://gorilla.cs.berkeley.edu/leaderboard.html), observed 2026-07-31 (`(FC)` = function-calling variant, `(P)` = prompt variant, highest shown; `n/a` = not on the current board, which prunes older checkpoints). "BFCL tier" is whether the model appears in BFCL's native **Function-Calling** list or only its **Prompt** list (prompt-only = no native FC). "vLLM parser" is the `--tool-call-parser` value, or `none` if vLLM ships no parser for it. "HF `tool` role" is whether the model's chat template defines the tool-calling turns SAM needs (H3).
 
-| Model | BFCL tier | vLLM parser | HF `tool` role | SAM verdict |
-|---|---|---|---|---|
-| Llama 3.3 70B Instruct | Function Calling | `llama3_json` | yes | excellent |
-| Qwen2.5 72B Instruct | Function Calling | `hermes` | yes | excellent |
-| Qwen2.5 32B Instruct | Function Calling | `hermes` | yes | excellent |
-| Qwen3 32B | Function Calling | `hermes` | yes | excellent |
-| Mistral Large 2 (2411) | Function Calling | `mistral` | yes | excellent |
-| Llama 3.1 405B Instruct | Function Calling | `llama3_json` | yes | excellent |
-| Llama 3.1 70B Instruct | Function Calling | `llama3_json` | yes | excellent |
-| DeepSeek-V3.1 | Function Calling | `deepseek_v31` | yes | very-good |
-| GLM-4.6 | Function Calling | `glm45` | yes | very-good |
-| gpt-oss 120b | Function Calling | `openai` | yes (harmony) | very-good |
-| Kimi-K2 Instruct | Function Calling | `kimi_k2` | yes | very-good |
-| Command A (03-2025) | Function Calling | `cohere_command3` | yes | very-good |
-| Qwen2.5 14B Instruct | Function Calling | `hermes` | yes | very-good |
-| Mixtral 8x22B Instruct | not listed | `mistral` | yes | good |
-| Mistral Small 3 (24B) | Function Calling | `mistral` | yes | very-good |
-| Qwen2.5 7B Instruct | Function Calling | `hermes` | yes | good |
-| Qwen2.5-Coder 32B | Function Calling | `hermes` | yes | very-good |
-| gpt-oss 20b | Function Calling | `openai` | yes (harmony) | good |
-| Mistral NeMo 12B | Function Calling | `mistral` | yes | good |
-| Llama 3.1 8B Instruct | Function Calling | `llama3_json` | yes | good |
-| DeepSeek-R1 (0528) | Prompt (base R1) | `deepseek_v3` | conditional | validate-first |
-| Command R+ (legacy) | Function Calling | none | yes | validate-first |
-| Gemma 2 27B Instruct | Prompt only | none | no | unsupported |
-| Phi-4 (14B) | Prompt only | none | no | unsupported |
-| Yi-1.5 34B Chat | not in FC tier | none | no | unsupported |
+| Model | BFCL V4 | BFCL tier | vLLM parser | HF `tool` role | SAM verdict |
+|---|---|---|---|---|---|
+| Llama 3.3 70B Instruct | 31.9 (FC) | Function Calling | `llama3_json` | yes | excellent |
+| Qwen2.5 72B Instruct | n/a | Function Calling | `hermes` | yes | excellent |
+| Qwen2.5 32B Instruct | n/a | Function Calling | `hermes` | yes | excellent |
+| Qwen3 32B | 48.71 (FC) | Function Calling | `hermes` | yes | excellent |
+| Mistral Large 2 (2411) | 38.37 (FC) | Function Calling | `mistral` | yes | excellent |
+| Llama 3.1 405B Instruct | n/a | Function Calling | `llama3_json` | yes | excellent |
+| Llama 3.1 70B Instruct | n/a | Function Calling | `llama3_json` | yes | excellent |
+| DeepSeek-V3.1 | n/a | Function Calling | `deepseek_v31` | yes | very-good |
+| GLM-4.6 | 72.38 (FC) | Function Calling | `glm45` | yes | very-good |
+| gpt-oss 120b | n/a | Function Calling | `openai` | yes (harmony) | very-good |
+| Kimi-K2 Instruct | 59.06 (FC) | Function Calling | `kimi_k2` | yes | very-good |
+| Command A (03-2025) | 46.49 (FC) | Function Calling | `cohere_command3` | yes | very-good |
+| Qwen2.5 14B Instruct | n/a | Function Calling | `hermes` | yes | very-good |
+| Mixtral 8x22B Instruct | n/a | not listed | `mistral` | yes | good |
+| Mistral Small 3 (24B) | n/a | Function Calling | `mistral` | yes | very-good |
+| Qwen2.5 7B Instruct | n/a | Function Calling | `hermes` | yes | good |
+| Qwen2.5-Coder 32B | n/a | Function Calling | `hermes` | yes | very-good |
+| gpt-oss 20b | n/a | Function Calling | `openai` | yes (harmony) | good |
+| Mistral NeMo 12B | 27.63 (FC) | Function Calling | `mistral` | yes | good |
+| Llama 3.1 8B Instruct | 25.83 (P) | Function Calling | `llama3_json` | yes | good |
+| DeepSeek-R1 (0528) | n/a | Prompt (base R1) | `deepseek_v3` | conditional | validate-first |
+| Command R+ (legacy) | n/a | Function Calling | none | yes | validate-first |
+| Gemma 2 27B Instruct | n/a | Prompt only | none | no | unsupported |
+| Phi-4 (14B) | 28.79 (P) | Prompt only | none | no | unsupported |
+| Yi-1.5 34B Chat | n/a | not in FC tier | none | no | unsupported |
+
+A note on the scores: BFCL V4 (observed 2026-07-31) has pruned most pre-2025 checkpoints, so 16 of these 25 models are simply absent from the current board (`n/a`) rather than scoring poorly. Where a live number exists, GLM-4.6 (72.38), Kimi-K2 (59.06), and Qwen3 32B (48.71) lead this set. Absolute values are low by MMLU standards because BFCL is deliberately hard (multi-turn, multi-step, and "do not call a tool" cases); treat the number as a relative ranking signal among models that *have* one, and the tier/parser/template columns as the pass/fail on whether SAM can drive the model at all.
 
 Reading the table:
 

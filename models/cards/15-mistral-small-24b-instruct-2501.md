@@ -9,10 +9,13 @@
 | Context window | 32,000 tokens |
 | Native tool calling | **yes** |
 | Tool-calling grade | **very-good** |
+| BFCL V4 overall acc | n/a |
 | Benchmark | Mistral Small line on BFCL Function-Calling tier |
 | License | Apache-2.0 |
 | Best SAM role | domain-agent |
 | vLLM tool parser | `mistral` |
+| VRAM (FP16 / 4-bit) | 55 GB / 15 GB |
+| Recommended GPU (4-bit) | 1x 16-24GB (RTX 4090 / L4) |
 
 ## SAM fit
 

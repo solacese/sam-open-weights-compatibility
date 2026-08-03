@@ -11,10 +11,13 @@
 | Context window | 8,000 tokens |
 | Native tool calling | **no** |
 | Tool-calling grade | **unsupported** |
+| BFCL V4 overall acc | n/a |
 | Benchmark | No native FC (vLLM has no parser; HF card has no tool role; BFCL prompt-only) |
 | License | Gemma |
 | Best SAM role | not-recommended |
 | vLLM tool parser | `none` |
+| VRAM (FP16 / 4-bit) | 62 GB / 17 GB |
+| Recommended GPU (4-bit) | 1x 24GB (RTX 4090 / A10) |
 
 ## SAM fit
 

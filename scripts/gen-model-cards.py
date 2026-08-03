@@ -39,6 +39,13 @@ def card(row: dict) -> str:
     parser = row["vllm_tool_parser"]
     native = row.get("native_tool_calling", "yes")
     bench = row.get("benchmark_note", "").strip()
+
+    def _vram(v: str) -> str:
+        v = (v or "n/a").strip()
+        return f"{v} GB" if v[:1].isdigit() else v
+
+    vram_fp16 = _vram(row.get("vram_fp16_gb", "n/a"))
+    vram_int4 = _vram(row.get("vram_int4_gb", "n/a"))
     orchestrator = role in ("orchestrator", "reasoning", "compliance-rag")
     supported = grade not in ("unsupported",)
     parallel = "true" if not any(k in repo for k in NO_PARALLEL) and supported else "false"
@@ -109,10 +116,13 @@ vLLM has **no tool-call parser** for this model, so SAM tool calling will not wo
 | Context window | {ctx:,} tokens |
 | Native tool calling | **{native}** |
 | Tool-calling grade | **{grade}** |
+| BFCL V4 overall acc | {row.get('bfcl_v4', 'n/a')} |
 | Benchmark | {bench or 'n/a'} |
 | License | {row['license']} |
 | Best SAM role | {role} |
 | vLLM tool parser | `{parser}` |
+| VRAM (FP16 / 4-bit) | {vram_fp16} / {vram_int4} |
+| Recommended GPU (4-bit) | {row.get('recommended_gpu', 'n/a')} |
 
 ## SAM fit
 

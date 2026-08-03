@@ -9,10 +9,13 @@
 | Context window | 128,000 tokens |
 | Native tool calling | **yes** |
 | Tool-calling grade | **excellent** |
+| BFCL V4 overall acc | n/a |
 | Benchmark | Native Hermes-style FC (vLLM); superseded on BFCL by Qwen3 |
 | License | Qwen |
 | Best SAM role | orchestrator |
 | vLLM tool parser | `hermes` |
+| VRAM (FP16 / 4-bit) | 166 GB / 46 GB |
+| Recommended GPU (4-bit) | 1x 48GB (A6000 / L40S) |
 
 ## SAM fit
 

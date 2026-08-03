@@ -9,10 +9,13 @@
 | Context window | 128,000 tokens |
 | Native tool calling | **yes** |
 | Tool-calling grade | **very-good** |
+| BFCL V4 overall acc | 59.06 (FC) |
 | Benchmark | BFCL Function-Calling tier (kimi-k2-FC) |
 | License | Modified MIT |
 | Best SAM role | orchestrator |
 | vLLM tool parser | `kimi_k2` |
+| VRAM (FP16 / 4-bit) | 2300 GB / 632 GB |
+| Recommended GPU (4-bit) | 8x 80GB (1x H100 node) |
 
 ## SAM fit
 

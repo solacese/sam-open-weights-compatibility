@@ -9,10 +9,13 @@
 | Context window | 128,000 tokens |
 | Native tool calling | **yes** |
 | Tool-calling grade | **good** |
+| BFCL V4 overall acc | 27.63 (FC) |
 | Benchmark | BFCL Function-Calling tier (open-mistral-nemo-2407-FC) |
 | License | Apache-2.0 |
 | Best SAM role | leaf-agent |
 | vLLM tool parser | `mistral` |
+| VRAM (FP16 / 4-bit) | 28 GB / 8 GB |
+| Recommended GPU (4-bit) | 1x 16-24GB (RTX 4090 / L4) |
 
 ## SAM fit
 

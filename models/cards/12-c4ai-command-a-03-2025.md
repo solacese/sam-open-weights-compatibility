@@ -9,10 +9,13 @@
 | Context window | 256,000 tokens |
 | Native tool calling | **yes** |
 | Tool-calling grade | **very-good** |
+| BFCL V4 overall acc | 46.49 (FC) |
 | Benchmark | BFCL Function-Calling tier (command-a-03-2025-FC) |
 | License | CC-BY-NC-4.0 |
 | Best SAM role | compliance-rag |
 | vLLM tool parser | `cohere_command3` |
+| VRAM (FP16 / 4-bit) | 255 GB / 70 GB |
+| Recommended GPU (4-bit) | 1x 80GB (A100 / H100) |
 
 ## SAM fit
 

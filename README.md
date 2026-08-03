@@ -21,6 +21,7 @@ This repo is the reference for anyone asking *"can I run SAM on an open model in
 | Understand *why* a model qualifies or not | [`docs/requirements.md`](docs/requirements.md) |
 | Pick a model | [`docs/shortlist.md`](docs/shortlist.md) + [`models/`](models/) |
 | See the benchmark evidence behind each grade | [`docs/benchmarks.md`](docs/benchmarks.md) |
+| Know the VRAM and GPU each model needs | [Hardware to self-host](#hardware-to-self-host) + [Recommended GPUs](#recommended-gpus) |
 | Prove a model works | [`docs/validation.md`](docs/validation.md) + [`tests/`](tests/) |
 | Serve an open model for SAM | [`docs/serving.md`](docs/serving.md) |
 | See the raw findings from the SAM source | [`docs/methodology.md`](docs/methodology.md) |
@@ -183,40 +184,98 @@ Open-weights models come from labs across the US, China, Europe, and Canada. Cou
 | Moonshot AI | China | Kimi-K2 |
 | 01.AI | China | Yi-1.5 34B (not recommended) |
 
+## Hardware to self-host
+
+The table below is the VRAM each model needs and the smallest GPU setup that runs it. Two numbers per model: **FP16** (full precision, what you need for a lossless deploy) and **4-bit** (AWQ / GPTQ / MXFP4, the practical self-host path most people take). Both include roughly 15% headroom for the KV cache and activations at a working context length; a very long context or high concurrency pushes the real number up, so size with margin.
+
+Sizing rules used here:
+
+- **FP16 is about 2 GB per billion total parameters; 4-bit is about 0.55 GB per billion.** Add ~15% for KV cache and activation overhead.
+- **Mixture-of-Experts (MoE) models must fit *all* parameters in VRAM, not just the active ones.** DeepSeek-V3.1 activates 37B per token but you still have to hold all 671B in memory. Size by total params, always.
+- **gpt-oss ships natively in MXFP4** (~4.25-bit), so there is no separate FP16 weight download; the 4-bit column is the real footprint.
+
+| Model | Params (active) | VRAM FP16 | VRAM 4-bit | Recommended GPU (4-bit) |
+|---|---|---|---|---|
+| Llama 3.3 70B Instruct | 70B | 161 GB | 44 GB | 1x 48GB (A6000 / L40S) |
+| Qwen2.5 72B Instruct | 72B | 166 GB | 46 GB | 1x 48GB (A6000 / L40S) |
+| Qwen2.5 32B Instruct | 32B | 74 GB | 20 GB | 1x 24GB (RTX 4090 / A10) |
+| Qwen3 32B | 32B | 74 GB | 20 GB | 1x 24GB (RTX 4090 / A10) |
+| Mistral Large 2 (2411) | 123B | 283 GB | 78 GB | 1x 80GB (A100 / H100) |
+| Llama 3.1 405B Instruct | 405B | 931 GB | 256 GB | 4x 80GB (A100 / H100) |
+| Llama 3.1 70B Instruct | 70B | 161 GB | 44 GB | 1x 48GB (A6000 / L40S) |
+| DeepSeek-V3.1 | 671B (37B) | 1543 GB | 424 GB | 8x 80GB (1x H100 node) |
+| GLM-4.6 | 355B (32B) | 816 GB | 225 GB | 4x 80GB (A100 / H100) |
+| gpt-oss 120b | 117B (5.1B) | n/a (MXFP4) | ~65 GB (MXFP4) | 1x 80GB (A100 / H100) |
+| Kimi-K2 Instruct | 1000B (32B) | 2300 GB | 632 GB | 8x 80GB (1x H100 node) |
+| Command A (03-2025) | 111B | 255 GB | 70 GB | 1x 80GB (A100 / H100) |
+| Qwen2.5 14B Instruct | 14B | 32 GB | 9 GB | 1x 16-24GB (RTX 4090 / L4) |
+| Mixtral 8x22B Instruct | 141B (39B) | 324 GB | 89 GB | 2x 80GB (A100 / H100) |
+| Mistral Small 3 (24B) | 24B | 55 GB | 15 GB | 1x 16-24GB (RTX 4090 / L4) |
+| Qwen2.5 7B Instruct | 7B | 16 GB | 4 GB | 1x 16-24GB (RTX 4090 / L4) |
+| Qwen2.5-Coder 32B | 32B | 74 GB | 20 GB | 1x 24GB (RTX 4090 / A10) |
+| gpt-oss 20b | 21B (3.6B) | n/a (MXFP4) | ~16 GB (MXFP4) | 1x 16-24GB (RTX 4090 / L4) |
+| Mistral NeMo 12B | 12B | 28 GB | 8 GB | 1x 16-24GB (RTX 4090 / L4) |
+| Llama 3.1 8B Instruct | 8B | 18 GB | 5 GB | 1x 16-24GB (RTX 4090 / L4) |
+| DeepSeek-R1 (0528) | 671B (37B) | 1543 GB | 424 GB | 8x 80GB (1x H100 node) |
+| Command R+ (legacy) | 104B | 239 GB | 66 GB | 1x 80GB (A100 / H100) |
+| Gemma 2 27B Instruct | 27B | 62 GB | 17 GB | 1x 24GB (RTX 4090 / A10) |
+| Phi-4 (14B) | 14B | 32 GB | 9 GB | 1x 16-24GB (RTX 4090 / L4) |
+| Yi-1.5 34B Chat | 34B | 78 GB | 22 GB | 1x 24GB (RTX 4090 / A10) |
+
+## Recommended GPUs
+
+Pick the smallest tier that fits your target model at 4-bit with room for context. Going one tier up buys you longer context and higher concurrency before you have to shard across cards.
+
+| GPU tier | VRAM | Runs (4-bit) | Notes |
+|---|---|---|---|
+| **Consumer** (RTX 4090 / RTX 3090) | 24 GB | Everything up to ~32B dense (Qwen2.5/Qwen3 32B, Gemma 2 27B, Yi 34B) and all the 7-14B models | The cheapest real self-host path. A single 4090 comfortably orchestrates SAM with a 32B model at 4-bit. |
+| **Workstation** (L4 / A10) | 16-24 GB | 7-14B models, gpt-oss 20b, Mistral Small 3 | Data-center cards for always-on inference; lower power draw than a 4090, easy to rack. |
+| **Single big-card** (A6000 / L40S) | 48 GB | 70-72B dense (Llama 3.3 70B, Qwen2.5 72B) | The sweet spot for a strong single-GPU orchestrator without an 80GB card. |
+| **Data-center** (A100 / H100) | 80 GB | 100-123B dense (Command A, Mistral Large), gpt-oss 120b, and MoE models whose *total* size fits | One card covers most heavyweight single-node deploys. |
+| **Multi-GPU node** (4-8x A100/H100) | 320-640 GB | Frontier MoE (DeepSeek-V3.1/R1, GLM-4.6, Kimi-K2) and Llama 3.1 405B | Needed because MoE holds all experts in memory. Kimi-K2 and DeepSeek want a full 8x80GB node even at 4-bit. |
+
+**Buyer's guidance:**
+
+- **Just want SAM to work well on one machine?** A single 24GB card (RTX 4090) running a 32B model at 4-bit (Qwen3 32B or Qwen2.5 32B) is the best price/capability point for a self-hosted orchestrator.
+- **Need the strongest single-card orchestrator?** A 48GB A6000/L40S runs Llama 3.3 70B at 4-bit, the top-ranked model here.
+- **Going frontier (GLM-4.6, DeepSeek, Kimi-K2)?** Budget for a multi-GPU 80GB node and remember to size by *total* MoE params, not active.
+
 ## Benchmark results
 
 The one capability SAM depends on is reliable tool calling, so the ranking below is grounded in the **Berkeley Function-Calling Leaderboard (BFCL)** rather than general benchmarks (MMLU, etc.). A model that scores high on MMLU but sits in BFCL's *Prompt-only* tier is a poor SAM fit, because it cannot emit native tool calls.
 
 Each verdict is cross-checked against three primary sources: the BFCL tier (native **Function-Calling** vs **Prompt-only**), the **vLLM `--tool-call-parser`** (or `none` if vLLM ships no parser for it), and the model's **Hugging Face chat template** (does it define the `tool` role SAM needs for multi-turn tool results?). Full reasoning in [`docs/benchmarks.md`](docs/benchmarks.md).
 
-| Model | BFCL tier | vLLM parser | HF `tool` role | SAM verdict |
-|---|---|---|---|---|
-| Llama 3.3 70B Instruct | Function Calling | `llama3_json` | yes | excellent |
-| Qwen2.5 72B Instruct | Function Calling | `hermes` | yes | excellent |
-| Qwen2.5 32B Instruct | Function Calling | `hermes` | yes | excellent |
-| Qwen3 32B | Function Calling | `hermes` | yes | excellent |
-| Mistral Large 2 (2411) | Function Calling | `mistral` | yes | excellent |
-| Llama 3.1 405B Instruct | Function Calling | `llama3_json` | yes | excellent |
-| Llama 3.1 70B Instruct | Function Calling | `llama3_json` | yes | excellent |
-| DeepSeek-V3.1 | Function Calling | `deepseek_v31` | yes | very-good |
-| GLM-4.6 | Function Calling | `glm45` | yes | very-good |
-| gpt-oss 120b | Function Calling | `openai` | yes (harmony) | very-good |
-| Kimi-K2 Instruct | Function Calling | `kimi_k2` | yes | very-good |
-| Command A (03-2025) | Function Calling | `cohere_command3` | yes | very-good |
-| Qwen2.5 14B Instruct | Function Calling | `hermes` | yes | very-good |
-| Mixtral 8x22B Instruct | not listed | `mistral` | yes | good |
-| Mistral Small 3 (24B) | Function Calling | `mistral` | yes | very-good |
-| Qwen2.5 7B Instruct | Function Calling | `hermes` | yes | good |
-| Qwen2.5-Coder 32B | Function Calling | `hermes` | yes | very-good |
-| gpt-oss 20b | Function Calling | `openai` | yes (harmony) | good |
-| Mistral NeMo 12B | Function Calling | `mistral` | yes | good |
-| Llama 3.1 8B Instruct | Function Calling | `llama3_json` | yes | good |
-| DeepSeek-R1 (0528) | Prompt (base R1) | `deepseek_v3` | conditional | validate-first |
-| Command R+ (legacy) | Function Calling | none | yes | validate-first |
-| Gemma 2 27B Instruct | Prompt only | none | no | unsupported |
-| Phi-4 (14B) | Prompt only | none | no | unsupported |
-| Yi-1.5 34B Chat | not in FC tier | none | no | unsupported |
+The **BFCL score** column is the overall accuracy from the live [Berkeley Function-Calling Leaderboard V4](https://gorilla.cs.berkeley.edu/leaderboard.html), observed 2026-07-31. `(FC)` = function-calling variant, `(P)` = prompt variant (the highest-scoring variant is shown). `n/a` means the model is **not on the current V4 board** (the maintainers pruned most older checkpoints); it does not mean the model is bad at tool calling. Where BFCL has no number, the tier / parser / template columns are the verdict basis. Scores are absolute (BFCL is deliberately hard: a 30-40% here is a capable tool caller, not a failing grade).
 
-**How to read it:** Function-Calling tier + a real vLLM parser + a `tool` role means SAM can drive the model's tool calls (verdicts `excellent`/`very-good`/`good`). A gap in any column drops the verdict: **Command R+** is FC-capable but has no current vLLM parser, so tool calling will not fire on a stock serve (use **Command A** instead). **Gemma 2, Phi-4, Yi-1.5** have no parser and no `tool` role and fail the first hard gate regardless of prompting.
+| Model | BFCL V4 score | BFCL tier | vLLM parser | HF `tool` role | SAM verdict |
+|---|---|---|---|---|---|
+| Llama 3.3 70B Instruct | 31.9 (FC) | Function Calling | `llama3_json` | yes | excellent |
+| Qwen2.5 72B Instruct | n/a | Function Calling | `hermes` | yes | excellent |
+| Qwen2.5 32B Instruct | n/a | Function Calling | `hermes` | yes | excellent |
+| Qwen3 32B | 48.71 (FC) | Function Calling | `hermes` | yes | excellent |
+| Mistral Large 2 (2411) | 38.37 (FC) | Function Calling | `mistral` | yes | excellent |
+| Llama 3.1 405B Instruct | n/a | Function Calling | `llama3_json` | yes | excellent |
+| Llama 3.1 70B Instruct | n/a | Function Calling | `llama3_json` | yes | excellent |
+| DeepSeek-V3.1 | n/a | Function Calling | `deepseek_v31` | yes | very-good |
+| GLM-4.6 | 72.38 (FC) | Function Calling | `glm45` | yes | very-good |
+| gpt-oss 120b | n/a | Function Calling | `openai` | yes (harmony) | very-good |
+| Kimi-K2 Instruct | 59.06 (FC) | Function Calling | `kimi_k2` | yes | very-good |
+| Command A (03-2025) | 46.49 (FC) | Function Calling | `cohere_command3` | yes | very-good |
+| Qwen2.5 14B Instruct | n/a | Function Calling | `hermes` | yes | very-good |
+| Mixtral 8x22B Instruct | n/a | not listed | `mistral` | yes | good |
+| Mistral Small 3 (24B) | n/a | Function Calling | `mistral` | yes | very-good |
+| Qwen2.5 7B Instruct | n/a | Function Calling | `hermes` | yes | good |
+| Qwen2.5-Coder 32B | n/a | Function Calling | `hermes` | yes | very-good |
+| gpt-oss 20b | n/a | Function Calling | `openai` | yes (harmony) | good |
+| Mistral NeMo 12B | 27.63 (FC) | Function Calling | `mistral` | yes | good |
+| Llama 3.1 8B Instruct | 25.83 (P) | Function Calling | `llama3_json` | yes | good |
+| DeepSeek-R1 (0528) | n/a | Prompt (base R1) | `deepseek_v3` | conditional | validate-first |
+| Command R+ (legacy) | n/a | Function Calling | none | yes | validate-first |
+| Gemma 2 27B Instruct | n/a | Prompt only | none | no | unsupported |
+| Phi-4 (14B) | 28.79 (P) | Prompt only | none | no | unsupported |
+| Yi-1.5 34B Chat | n/a | not in FC tier | none | no | unsupported |
+
+**How to read it:** Function-Calling tier + a real vLLM parser + a `tool` role means SAM can drive the model's tool calls (verdicts `excellent`/`very-good`/`good`). A gap in any column drops the verdict: **Command R+** is FC-capable but has no current vLLM parser, so tool calling will not fire on a stock serve (use **Command A** instead). **Gemma 2, Phi-4, Yi-1.5** have no parser and no `tool` role and fail the first hard gate regardless of prompting. Note that Phi-4's non-trivial BFCL *prompt-mode* score does not rescue it: prompt-mode pseudo-JSON is not the native `tool_calls` SAM's loop consumes.
 
 > Leaderboards move and these are documentation-backed priors, not per-stack measurements. The [validation harness](docs/validation.md) is the source of truth for your quant and serving path.

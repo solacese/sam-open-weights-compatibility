@@ -9,10 +9,13 @@
 | Context window | 128,000 tokens |
 | Native tool calling | **yes** |
 | Tool-calling grade | **good** |
+| BFCL V4 overall acc | n/a |
 | Benchmark | Agentic-first; ~o3-mini class (vendor); runs in ~16GB |
 | License | Apache-2.0 |
 | Best SAM role | leaf-agent |
 | vLLM tool parser | `openai` |
+| VRAM (FP16 / 4-bit) | n/a (MXFP4) / ~16 (MXFP4) |
+| Recommended GPU (4-bit) | 1x 16-24GB (RTX 4090 / L4) |
 
 ## SAM fit
 

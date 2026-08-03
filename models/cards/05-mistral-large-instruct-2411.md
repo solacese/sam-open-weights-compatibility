@@ -9,10 +9,13 @@
 | Context window | 128,000 tokens |
 | Native tool calling | **yes** |
 | Tool-calling grade | **excellent** |
+| BFCL V4 overall acc | 38.37 (FC) |
 | Benchmark | BFCL Function-Calling tier (mistral-large-2411-FC) |
 | License | MRL non-prod |
 | Best SAM role | orchestrator |
 | vLLM tool parser | `mistral` |
+| VRAM (FP16 / 4-bit) | 283 GB / 78 GB |
+| Recommended GPU (4-bit) | 1x 80GB (A100 / H100) |
 
 ## SAM fit
 

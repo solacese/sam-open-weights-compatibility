@@ -9,10 +9,13 @@
 | Context window | 128,000 tokens |
 | Native tool calling | **yes** |
 | Tool-calling grade | **good** |
+| BFCL V4 overall acc | 25.83 (P) |
 | Benchmark | BFCL Function-Calling tier (self-hosted) |
 | License | Llama 3.1 Community |
 | Best SAM role | leaf-agent |
 | vLLM tool parser | `llama3_json` |
+| VRAM (FP16 / 4-bit) | 18 GB / 5 GB |
+| Recommended GPU (4-bit) | 1x 16-24GB (RTX 4090 / L4) |
 
 ## SAM fit
 

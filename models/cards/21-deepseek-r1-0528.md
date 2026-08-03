@@ -11,10 +11,13 @@
 | Context window | 128,000 tokens |
 | Native tool calling | **partial** |
 | Tool-calling grade | **validate-first** |
+| BFCL V4 overall acc | n/a |
 | Benchmark | BFCL Prompt tier only (base R1 has no native FC) |
 | License | MIT |
 | Best SAM role | reasoning |
 | vLLM tool parser | `deepseek_v3` |
+| VRAM (FP16 / 4-bit) | 1543 GB / 424 GB |
+| Recommended GPU (4-bit) | 8x 80GB (1x H100 node) |
 
 ## SAM fit
 

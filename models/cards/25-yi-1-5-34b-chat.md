@@ -11,10 +11,13 @@
 | Context window | 32,000 tokens |
 | Native tool calling | **no** |
 | Tool-calling grade | **unsupported** |
+| BFCL V4 overall acc | n/a |
 | Benchmark | No confirmed native FC (not in vLLM parser list or BFCL FC tier) |
 | License | Apache-2.0 |
 | Best SAM role | not-recommended |
 | vLLM tool parser | `none` |
+| VRAM (FP16 / 4-bit) | 78 GB / 22 GB |
+| Recommended GPU (4-bit) | 1x 24GB (RTX 4090 / A10) |
 
 ## SAM fit
 
