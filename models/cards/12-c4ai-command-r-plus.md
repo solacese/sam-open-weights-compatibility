@@ -1,4 +1,6 @@
-# 22. Command R+ (legacy)
+# Command R+ (legacy)
+
+*BFCL-score rank #12 of 25 · SAM-fit rank #22 (see [shortlist](../../docs/shortlist.md))*
 
 > **Validate before trusting.** Tool calling works only under specific conditions (revision / template / serving path). Run the harness first.
 
@@ -11,7 +13,7 @@
 | Context window | 128,000 tokens |
 | Native tool calling | **partial** |
 | Tool-calling grade | **validate-first** |
-| BFCL V4 overall acc | n/a |
+| BFCL overall acc | 49.35 (FC, V3) |
 | Benchmark | Superseded by Command A; not in current vLLM parser list |
 | License | CC-BY-NC-4.0 |
 | Best SAM role | compliance-rag |

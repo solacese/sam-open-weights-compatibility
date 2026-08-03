@@ -1,4 +1,6 @@
-# 12. Command A
+# Command A
+
+*BFCL-score rank #14 of 25 · SAM-fit rank #12 (see [shortlist](../../docs/shortlist.md))*
 
 | Field | Value |
 |---|---|
@@ -9,7 +11,7 @@
 | Context window | 256,000 tokens |
 | Native tool calling | **yes** |
 | Tool-calling grade | **very-good** |
-| BFCL V4 overall acc | 46.49 (FC) |
+| BFCL overall acc | 46.49 (FC, V4) |
 | Benchmark | BFCL Function-Calling tier (command-a-03-2025-FC) |
 | License | CC-BY-NC-4.0 |
 | Best SAM role | compliance-rag |

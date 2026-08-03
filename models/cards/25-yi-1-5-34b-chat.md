@@ -1,4 +1,6 @@
-# 25. Yi-1.5 34B Chat
+# Yi-1.5 34B Chat
+
+*BFCL-score rank #25 of 25 · SAM-fit rank #25 (see [shortlist](../../docs/shortlist.md))*
 
 > **Not recommended for SAM.** This model lacks native OpenAI-schema tool calling, which SAM requires. See the note below for the recommended alternative.
 
@@ -11,7 +13,7 @@
 | Context window | 32,000 tokens |
 | Native tool calling | **no** |
 | Tool-calling grade | **unsupported** |
-| BFCL V4 overall acc | n/a |
+| BFCL overall acc | n/a |
 | Benchmark | No confirmed native FC (not in vLLM parser list or BFCL FC tier) |
 | License | Apache-2.0 |
 | Best SAM role | not-recommended |

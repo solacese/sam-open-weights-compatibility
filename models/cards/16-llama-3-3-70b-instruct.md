@@ -1,4 +1,6 @@
-# 1. Llama 3.3 70B Instruct
+# Llama 3.3 70B Instruct
+
+*BFCL-score rank #16 of 25 · SAM-fit rank #1 (see [shortlist](../../docs/shortlist.md))*
 
 | Field | Value |
 |---|---|
@@ -9,7 +11,7 @@
 | Context window | 128,000 tokens |
 | Native tool calling | **yes** |
 | Tool-calling grade | **excellent** |
-| BFCL V4 overall acc | 31.9 (FC) |
+| BFCL overall acc | 31.9 (FC, V4) |
 | Benchmark | BFCL Function-Calling tier (self-hosted) |
 | License | Llama 3.3 Community |
 | Best SAM role | orchestrator |

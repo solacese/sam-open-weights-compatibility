@@ -1,36 +1,38 @@
-# 2. Qwen2.5 72B Instruct
+# gpt-oss 120b
+
+*BFCL-score rank #21 of 25 · SAM-fit rank #10 (see [shortlist](../../docs/shortlist.md))*
 
 | Field | Value |
 |---|---|
-| HF repo | `Qwen/Qwen2.5-72B-Instruct` |
-| Organization | Alibaba (Qwen team) |
-| Country of origin | China |
-| Params (active) | 72B (72B) |
+| HF repo | `openai/gpt-oss-120b` |
+| Organization | OpenAI |
+| Country of origin | USA |
+| Params (active) | 117B (5.1B) |
 | Context window | 128,000 tokens |
 | Native tool calling | **yes** |
-| Tool-calling grade | **excellent** |
-| BFCL V4 overall acc | n/a |
-| Benchmark | Native Hermes-style FC (vLLM); superseded on BFCL by Qwen3 |
-| License | Qwen |
+| Tool-calling grade | **very-good** |
+| BFCL overall acc | n/a |
+| Benchmark | Agentic-first; near o4-mini reasoning (vendor) |
+| License | Apache-2.0 |
 | Best SAM role | orchestrator |
-| vLLM tool parser | `hermes` |
-| VRAM (FP16 / 4-bit) | 166 GB / 46 GB |
-| Recommended GPU (4-bit) | 1x 48GB (A6000 / L40S) |
+| vLLM tool parser | `openai` |
+| VRAM (FP16 / 4-bit) | n/a (MXFP4) / ~65 (MXFP4) |
+| Recommended GPU (4-bit) | 1x 80GB (A100 / H100) |
 
 ## SAM fit
 
-Production-proven tool calling. Safe for orchestrator roles.
+Reliable tool calling. Good for orchestrator or domain agents.
 
 - **Hard gates (H1 tool calls / H2 streaming / H3 tool-result turns):** expected PASS - verify on your stack.
 - **Context (S2):** 128,000 tokens - ample for orchestrator + multi-hop.
 - **Role:** suited to orchestration (routing, fan-out, synthesis).
-- **Notes:** Strong multi-tool and parallel calls.
+- **Notes:** OpenAI open-weight; harmony format required; dedicated vLLM openai parser.
 
 ## SAM `model:` block
 
 ```yaml
 model:
-  model: openai/Qwen/Qwen2.5-72B-Instruct
+  model: openai/openai/gpt-oss-120b
   api_base: ${LLM_API_BASE}         # your OpenAI-compatible endpoint, e.g. http://localhost:8000/v1
   api_key: ${LLM_API_KEY, sk-noop}
   parallel_tool_calls: true
@@ -40,17 +42,17 @@ model:
 ## Serve it (vLLM)
 
 ```bash
-vllm serve Qwen/Qwen2.5-72B-Instruct \
+vllm serve openai/gpt-oss-120b \
   --host 0.0.0.0 --port 8000 \
   --enable-auto-tool-choice \
-  --tool-call-parser hermes \
+  --tool-call-parser openai \
   --max-model-len 128000
 ```
 
 ## Validate
 
 ```bash
-export SAM_TEST_MODEL="openai/Qwen/Qwen2.5-72B-Instruct"
+export SAM_TEST_MODEL="openai/openai/gpt-oss-120b"
 export SAM_TEST_API_BASE="http://localhost:8000/v1"
 ./scripts/probe.sh && ./scripts/run-sam-scenario.sh two-tool-dependency
 ```

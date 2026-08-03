@@ -1,4 +1,6 @@
-# 14. Mixtral 8x22B Instruct
+# Mixtral 8x22B Instruct
+
+*BFCL-score rank #11 of 25 · SAM-fit rank #14 (see [shortlist](../../docs/shortlist.md))*
 
 | Field | Value |
 |---|---|
@@ -9,7 +11,7 @@
 | Context window | 64,000 tokens |
 | Native tool calling | **yes** |
 | Tool-calling grade | **good** |
-| BFCL V4 overall acc | n/a |
+| BFCL overall acc | 50.36 (P, V3) |
 | Benchmark | Native Mistral FC; not on current BFCL |
 | License | Apache-2.0 |
 | Best SAM role | orchestrator |

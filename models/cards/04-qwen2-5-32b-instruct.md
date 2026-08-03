@@ -1,21 +1,23 @@
-# 6. Llama 3.1 405B Instruct
+# Qwen2.5 32B Instruct
+
+*BFCL-score rank #4 of 25 · SAM-fit rank #3 (see [shortlist](../../docs/shortlist.md))*
 
 | Field | Value |
 |---|---|
-| HF repo | `meta-llama/Llama-3.1-405B-Instruct` |
-| Organization | Meta |
-| Country of origin | USA |
-| Params (active) | 405B (405B) |
+| HF repo | `Qwen/Qwen2.5-32B-Instruct` |
+| Organization | Alibaba (Qwen team) |
+| Country of origin | China |
+| Params (active) | 32B (32B) |
 | Context window | 128,000 tokens |
 | Native tool calling | **yes** |
 | Tool-calling grade | **excellent** |
-| BFCL V4 overall acc | n/a |
-| Benchmark | BFCL Function-Calling tier (self-hosted) |
-| License | Llama 3.1 Community |
+| BFCL overall acc | 59.67 (P, V3) |
+| Benchmark | Native Hermes-style FC (vLLM) |
+| License | Apache-2.0 |
 | Best SAM role | orchestrator |
-| vLLM tool parser | `llama3_json` |
-| VRAM (FP16 / 4-bit) | 931 GB / 256 GB |
-| Recommended GPU (4-bit) | 4x 80GB (A100 / H100) |
+| vLLM tool parser | `hermes` |
+| VRAM (FP16 / 4-bit) | 74 GB / 20 GB |
+| Recommended GPU (4-bit) | 1x 24GB (RTX 4090 / A10) |
 
 ## SAM fit
 
@@ -24,33 +26,33 @@ Production-proven tool calling. Safe for orchestrator roles.
 - **Hard gates (H1 tool calls / H2 streaming / H3 tool-result turns):** expected PASS - verify on your stack.
 - **Context (S2):** 128,000 tokens - ample for orchestrator + multi-hop.
 - **Role:** suited to orchestration (routing, fan-out, synthesis).
-- **Notes:** Highest ceiling; heavy host; in SAM modelinfo. No parallel tool calls (Llama 3).
+- **Notes:** Best single-GPU orchestrator; Apache-2.0.
 
 ## SAM `model:` block
 
 ```yaml
 model:
-  model: openai/meta-llama/Llama-3.1-405B-Instruct
+  model: openai/Qwen/Qwen2.5-32B-Instruct
   api_base: ${LLM_API_BASE}         # your OpenAI-compatible endpoint, e.g. http://localhost:8000/v1
   api_key: ${LLM_API_KEY, sk-noop}
-  parallel_tool_calls: false
+  parallel_tool_calls: true
   temperature: 0.2
   max_tokens: 4096
 ```
 ## Serve it (vLLM)
 
 ```bash
-vllm serve meta-llama/Llama-3.1-405B-Instruct \
+vllm serve Qwen/Qwen2.5-32B-Instruct \
   --host 0.0.0.0 --port 8000 \
   --enable-auto-tool-choice \
-  --tool-call-parser llama3_json \
+  --tool-call-parser hermes \
   --max-model-len 128000
 ```
 
 ## Validate
 
 ```bash
-export SAM_TEST_MODEL="openai/meta-llama/Llama-3.1-405B-Instruct"
+export SAM_TEST_MODEL="openai/Qwen/Qwen2.5-32B-Instruct"
 export SAM_TEST_API_BASE="http://localhost:8000/v1"
 ./scripts/probe.sh && ./scripts/run-sam-scenario.sh two-tool-dependency
 ```

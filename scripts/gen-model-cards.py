@@ -50,7 +50,8 @@ def card(row: dict) -> str:
     supported = grade not in ("unsupported",)
     parallel = "true" if not any(k in repo for k in NO_PARALLEL) and supported else "false"
 
-    header = f"# {row['rank']}. {row['model']}\n"
+    fit = row.get("fit_rank", row["rank"])
+    header = f"# {row['model']}\n\n*BFCL-score rank #{row['rank']} of 25 · SAM-fit rank #{fit} (see [shortlist](../../docs/shortlist.md))*\n"
     if grade == "unsupported":
         header += "\n> **Not recommended for SAM.** This model lacks native OpenAI-schema tool calling, which SAM requires. See the note below for the recommended alternative.\n"
     elif grade == "validate-first":
@@ -116,7 +117,7 @@ vLLM has **no tool-call parser** for this model, so SAM tool calling will not wo
 | Context window | {ctx:,} tokens |
 | Native tool calling | **{native}** |
 | Tool-calling grade | **{grade}** |
-| BFCL V4 overall acc | {row.get('bfcl_v4', 'n/a')} |
+| BFCL overall acc | {row.get('bfcl_v4', 'n/a')} |
 | Benchmark | {bench or 'n/a'} |
 | License | {row['license']} |
 | Best SAM role | {role} |

@@ -1,56 +1,58 @@
-# 7. Llama 3.1 70B Instruct
+# Kimi-K2 Instruct
+
+*BFCL-score rank #5 of 25 · SAM-fit rank #11 (see [shortlist](../../docs/shortlist.md))*
 
 | Field | Value |
 |---|---|
-| HF repo | `meta-llama/Llama-3.1-70B-Instruct` |
-| Organization | Meta |
-| Country of origin | USA |
-| Params (active) | 70B (70B) |
+| HF repo | `moonshotai/Kimi-K2-Instruct` |
+| Organization | Moonshot AI |
+| Country of origin | China |
+| Params (active) | 1000B (32B) |
 | Context window | 128,000 tokens |
 | Native tool calling | **yes** |
-| Tool-calling grade | **excellent** |
-| BFCL V4 overall acc | n/a |
-| Benchmark | BFCL Function-Calling tier (self-hosted) |
-| License | Llama 3.1 Community |
+| Tool-calling grade | **very-good** |
+| BFCL overall acc | 59.06 (FC, V4) |
+| Benchmark | BFCL Function-Calling tier (kimi-k2-FC) |
+| License | Modified MIT |
 | Best SAM role | orchestrator |
-| vLLM tool parser | `llama3_json` |
-| VRAM (FP16 / 4-bit) | 161 GB / 44 GB |
-| Recommended GPU (4-bit) | 1x 48GB (A6000 / L40S) |
+| vLLM tool parser | `kimi_k2` |
+| VRAM (FP16 / 4-bit) | 2300 GB / 632 GB |
+| Recommended GPU (4-bit) | 8x 80GB (1x H100 node) |
 
 ## SAM fit
 
-Production-proven tool calling. Safe for orchestrator roles.
+Reliable tool calling. Good for orchestrator or domain agents.
 
 - **Hard gates (H1 tool calls / H2 streaming / H3 tool-result turns):** expected PASS - verify on your stack.
 - **Context (S2):** 128,000 tokens - ample for orchestrator + multi-hop.
 - **Role:** suited to orchestration (routing, fan-out, synthesis).
-- **Notes:** Ubiquitous safe default; in SAM modelinfo. No parallel tool calls (Llama 3).
+- **Notes:** Very large MoE; strong agentic tool use.
 
 ## SAM `model:` block
 
 ```yaml
 model:
-  model: openai/meta-llama/Llama-3.1-70B-Instruct
+  model: openai/moonshotai/Kimi-K2-Instruct
   api_base: ${LLM_API_BASE}         # your OpenAI-compatible endpoint, e.g. http://localhost:8000/v1
   api_key: ${LLM_API_KEY, sk-noop}
-  parallel_tool_calls: false
+  parallel_tool_calls: true
   temperature: 0.2
   max_tokens: 4096
 ```
 ## Serve it (vLLM)
 
 ```bash
-vllm serve meta-llama/Llama-3.1-70B-Instruct \
+vllm serve moonshotai/Kimi-K2-Instruct \
   --host 0.0.0.0 --port 8000 \
   --enable-auto-tool-choice \
-  --tool-call-parser llama3_json \
+  --tool-call-parser kimi_k2 \
   --max-model-len 128000
 ```
 
 ## Validate
 
 ```bash
-export SAM_TEST_MODEL="openai/meta-llama/Llama-3.1-70B-Instruct"
+export SAM_TEST_MODEL="openai/moonshotai/Kimi-K2-Instruct"
 export SAM_TEST_API_BASE="http://localhost:8000/v1"
 ./scripts/probe.sh && ./scripts/run-sam-scenario.sh two-tool-dependency
 ```

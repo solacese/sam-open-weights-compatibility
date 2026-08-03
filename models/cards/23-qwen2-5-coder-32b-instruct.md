@@ -1,36 +1,38 @@
-# 4. Qwen3 32B
+# Qwen2.5-Coder 32B
+
+*BFCL-score rank #23 of 25 · SAM-fit rank #17 (see [shortlist](../../docs/shortlist.md))*
 
 | Field | Value |
 |---|---|
-| HF repo | `Qwen/Qwen3-32B` |
+| HF repo | `Qwen/Qwen2.5-Coder-32B-Instruct` |
 | Organization | Alibaba (Qwen team) |
 | Country of origin | China |
 | Params (active) | 32B (32B) |
 | Context window | 128,000 tokens |
 | Native tool calling | **yes** |
-| Tool-calling grade | **excellent** |
-| BFCL V4 overall acc | 48.71 (FC) |
-| Benchmark | BFCL Function-Calling tier (self-hosted) |
+| Tool-calling grade | **very-good** |
+| BFCL overall acc | n/a |
+| Benchmark | Native Hermes-style FC (vLLM) |
 | License | Apache-2.0 |
-| Best SAM role | orchestrator |
+| Best SAM role | structured-tools |
 | vLLM tool parser | `hermes` |
 | VRAM (FP16 / 4-bit) | 74 GB / 20 GB |
 | Recommended GPU (4-bit) | 1x 24GB (RTX 4090 / A10) |
 
 ## SAM fit
 
-Production-proven tool calling. Safe for orchestrator roles.
+Reliable tool calling. Good for orchestrator or domain agents.
 
 - **Hard gates (H1 tool calls / H2 streaming / H3 tool-result turns):** expected PASS - verify on your stack.
 - **Context (S2):** 128,000 tokens - ample for orchestrator + multi-hop.
-- **Role:** suited to orchestration (routing, fan-out, synthesis).
-- **Notes:** Current-gen Qwen; strong FC; toggleable thinking.
+- **Role:** suited to domain/leaf agents (one or two tools, cost-sensitive, high volume).
+- **Notes:** Best for code/structured tool args.
 
 ## SAM `model:` block
 
 ```yaml
 model:
-  model: openai/Qwen/Qwen3-32B
+  model: openai/Qwen/Qwen2.5-Coder-32B-Instruct
   api_base: ${LLM_API_BASE}         # your OpenAI-compatible endpoint, e.g. http://localhost:8000/v1
   api_key: ${LLM_API_KEY, sk-noop}
   parallel_tool_calls: true
@@ -40,7 +42,7 @@ model:
 ## Serve it (vLLM)
 
 ```bash
-vllm serve Qwen/Qwen3-32B \
+vllm serve Qwen/Qwen2.5-Coder-32B-Instruct \
   --host 0.0.0.0 --port 8000 \
   --enable-auto-tool-choice \
   --tool-call-parser hermes \
@@ -50,7 +52,7 @@ vllm serve Qwen/Qwen3-32B \
 ## Validate
 
 ```bash
-export SAM_TEST_MODEL="openai/Qwen/Qwen3-32B"
+export SAM_TEST_MODEL="openai/Qwen/Qwen2.5-Coder-32B-Instruct"
 export SAM_TEST_API_BASE="http://localhost:8000/v1"
 ./scripts/probe.sh && ./scripts/run-sam-scenario.sh two-tool-dependency
 ```

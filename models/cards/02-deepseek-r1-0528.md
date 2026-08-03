@@ -1,4 +1,6 @@
-# 21. DeepSeek-R1 (0528)
+# DeepSeek-R1 (0528)
+
+*BFCL-score rank #2 of 25 · SAM-fit rank #21 (see [shortlist](../../docs/shortlist.md))*
 
 > **Validate before trusting.** Tool calling works only under specific conditions (revision / template / serving path). Run the harness first.
 
@@ -11,7 +13,7 @@
 | Context window | 128,000 tokens |
 | Native tool calling | **partial** |
 | Tool-calling grade | **validate-first** |
-| BFCL V4 overall acc | n/a |
+| BFCL overall acc | 63.79 (FC, V4) |
 | Benchmark | BFCL Prompt tier only (base R1 has no native FC) |
 | License | MIT |
 | Best SAM role | reasoning |

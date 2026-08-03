@@ -1,4 +1,6 @@
-# 16. Qwen2.5 7B Instruct
+# Qwen2.5 7B Instruct
+
+*BFCL-score rank #8 of 25 · SAM-fit rank #16 (see [shortlist](../../docs/shortlist.md))*
 
 | Field | Value |
 |---|---|
@@ -9,7 +11,7 @@
 | Context window | 128,000 tokens |
 | Native tool calling | **yes** |
 | Tool-calling grade | **good** |
-| BFCL V4 overall acc | n/a |
+| BFCL overall acc | 56.70 (FC, V3) |
 | Benchmark | Native Hermes-style FC (vLLM) |
 | License | Apache-2.0 |
 | Best SAM role | leaf-agent |
