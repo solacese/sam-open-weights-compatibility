@@ -8,6 +8,65 @@ The critical detail for SAM is **tool calling must work while streaming (H2)**. 
 
 ---
 
+## 5-minute quickstart
+
+You need two things: an OpenAI-compatible endpoint serving the model, and a SAM `model:` block pointing at it. Here is the shortest path with the two most common servers; the full recipes (SGLang, TGI, LiteLLM, air-gapped, TLS) are below.
+
+### Option A - Ollama (easiest, laptop-friendly)
+
+```bash
+# 1. Install Ollama (https://ollama.com), then pull a tool-capable model
+ollama pull qwen2.5:32b
+
+# 2. Start the server (OpenAI-compatible API on :11434)
+ollama serve
+```
+
+Point SAM at it. Ollama is a first-class SAM provider prefix:
+
+```yaml
+model:
+  model: ollama/qwen2.5:32b
+  api_base: http://localhost:11434
+```
+
+### Option B - vLLM (production, GPU)
+
+```bash
+pip install vllm
+
+# The two tool-calling flags are REQUIRED - without them SAM cannot call tools.
+vllm serve Qwen/Qwen2.5-32B-Instruct \
+  --host 0.0.0.0 --port 8000 \
+  --enable-auto-tool-choice \
+  --tool-call-parser hermes \
+  --max-model-len 32768
+```
+
+Point SAM at it (`openai/` selects the API protocol, not a hosted model):
+
+```yaml
+model:
+  model: openai/Qwen/Qwen2.5-32B-Instruct
+  api_base: http://localhost:8000/v1
+  api_key: sk-noop            # vLLM ignores this unless you set --api-key
+  parallel_tool_calls: true
+  temperature: 0.2
+  max_tokens: 4096
+```
+
+### Then confirm it actually works
+
+```bash
+export SAM_TEST_MODEL="openai/Qwen/Qwen2.5-32B-Instruct"   # or ollama/qwen2.5:32b
+export SAM_TEST_API_BASE="http://localhost:8000/v1"        # or http://localhost:11434/v1
+../scripts/probe.sh
+```
+
+Each model's card in [`../models/cards/`](../models/cards/) has the exact `--tool-call-parser`, serve command, and copy-paste `model:` block for that model. To prove a full SAM agent loop, see [`validation.md`](validation.md).
+
+---
+
 ## vLLM (recommended for production)
 
 ```bash

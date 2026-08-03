@@ -9,6 +9,25 @@ Always run `probe.sh` first (cheap), then confirm with the SAM scenario.
 
 ---
 
+## Validate any model in 3 commands
+
+```bash
+# 1. Point at your endpoint (any OpenAI-compatible server)
+export SAM_TEST_MODEL="openai/Qwen/Qwen2.5-32B-Instruct"
+export SAM_TEST_API_BASE="http://localhost:8000/v1"
+export SAM_TEST_API_KEY="sk-noop"        # many local servers ignore this
+
+# 2. Run the capability probe (no SAM required - pure OpenAI-compat check)
+../scripts/probe.sh
+
+# 3. Run the full SAM two-tool agent scenario (requires SAM installed)
+../scripts/run-sam-scenario.sh
+```
+
+`probe.sh` checks the three hard gates directly against the endpoint. `run-sam-scenario.sh` runs a real SAM agent that must call tool A, then call tool B *using A's output* - the exact loop that separates real tool-callers from pretenders. The rest of this page explains each level and how to read the results.
+
+---
+
 ## Prerequisites
 
 - A model served behind an OpenAI-compatible API. See [serving.md](serving.md) to stand one up.
