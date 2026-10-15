@@ -1,58 +1,42 @@
-# Methodology - How These Conclusions Were Derived
+# Methodology and evidence levels
 
-This document exists so the requirements are auditable. Every claim in [requirements.md](requirements.md) traces to a specific place in the SAM codebase (`solace-agent-mesh-go`) or the official SAM documentation. Nothing here is inferred from a model vendor's marketing.
+Research cutoff: **15 October 2026**. This revision checks publisher model cards, downloadable metadata, checkpoint configuration and license text, plus current SAM source. It does not download full weights, run GPUs or certify compatibility.
 
-## Sources
+## SAM source inspected
 
-1. **`internal/llm/client.go`** - the `llm.Client` interface and its request/response types. This is the contract the entire agent core programs against. It is the single most authoritative artifact: whatever the interface requires of a model, a model must provide.
-2. **`internal/llm/bifrost.go`** - the Bifrost-backed implementation. Shows how SAM's abstract request maps to the wire (e.g. how `ToolChoice` becomes a Bifrost `ChatToolChoice`).
-3. **`internal/agentcore/agent.go`** + `auto_continue.go` - the multi-turn tool-calling loop, streaming reassembly, and parallel-tool ordering.
-4. **`internal/agentcore/structured/`** - the structured-output / forced-tool paths that rely on `tool_choice`.
-5. **`internal/samapp/model.go`** - how model config YAML is parsed (`knownProviders`, `knownModelConfigKeys`, `nonCompletionKeys`), which defines exactly which config keys are honored.
-6. **`internal/llm/modelinfo/modelinfo.go`** - the static context-window table SAM ships, which reveals the model families SAM's authors already track and the context sizes assumed.
-7. **SAM docs** - `docs/documentation/installing/configure.md` (LLM provider section) and `airgap.md`, which state the `openai/` + `api_base` protocol-vs-backend rule and OpenAI-compatible-gateway support.
+| Runtime | Immutable source | What was checked |
+|---|---|---|
+| Go | [SolaceDev/solace-agent-mesh-go @ 038d17c](https://github.com/SolaceDev/solace-agent-mesh-go/tree/038d17cd61c4ba19580c704774131ae8dc3a84f6) | Bifrost protocol selection and model config, typed tool calls, stream deltas and tool results |
+| Python | [SolaceLabs/solace-agent-mesh @ f71e744](https://github.com/SolaceLabs/solace-agent-mesh/tree/f71e744842a66331a7dbb33e5fba8319dc892d12) | LiteLLM wrapper, ADK path, A2A streaming config and CLI layout |
 
-## Requirement → evidence map
+Go paths, relative to the pinned tree:
 
-| Requirement | Evidence |
-|---|---|
-| **H1 Native tool calling** | `client.go`: `ChatRequest.Tools []ToolDefinition`, `ChatResponse.ToolCalls []ToolCall`, `FinishReason` value `"tool_calls"`. `agent.go` branches on this to execute tools. No code path parses tool intent out of free text. |
-| **H2 Streaming tool-call deltas** | `client.go`: `ChatCompletionStream` + `StreamChunk.ToolCallDeltas []ToolCallDelta{Index,ID,Name,ArgumentsDelta}`. `agent.go` reassembles per-index deltas into complete calls. Agents default to `supports_streaming: true`. |
-| **H3 Multi-turn tool results** | `client.go`: `ChatMessage.Role` includes `"tool"`; `ToolCallID`, `ToolName` fields. `agent.go` appends tool results as `tool` messages and re-invokes the model. |
-| **S1 tool_choice** | `bifrost.go:497` sets `params.ToolChoice` from `req.ToolChoice`. `structured/` uses forced/named tool choice. |
-| **S2 Context window** | `modelinfo.go` maintains per-model `max_input_tokens`; used by the gateway's context-usage resolution. Multi-hop orchestration forwards tool results into subsequent turns, consuming context. |
-| **S3 JSON arg fidelity** | `ToolCall.Arguments string` is JSON that SAM unmarshals for dispatch. Malformed JSON = dispatch failure. |
-| **N1 Parallel tool calls** | `agent.go` handles `len(ToolCalls) > 1` and preserves parallel result order; `model.go` honors `parallel_tool_calls` config key. |
-| **N2 Reasoning tokens** | `client.go`: `ReasoningConfig.BudgetTokens`, `StreamChunk.ReasoningDelta`, `Usage.ReasoningTokens`. `model.go` treats `thinking` as a non-completion key. |
-| **N3 Prompt caching** | `client.go`: `CacheControl{Type,TTL}`; `model.go` `cache_strategy` non-completion key. |
-| **N4 Vision** | `client.go`: `ContentBlock{Type:"image_url", ImageURL}`. |
-| **Provider/protocol rule** | `configure.md`: "The prefix tells Bifrost which API protocol to use, not which backend model is running." `model.go` `knownProviders` includes `openai`, `ollama`, and 17 others. |
+- [`internal/llm/client.go`](https://github.com/SolaceDev/solace-agent-mesh-go/blob/038d17cd61c4ba19580c704774131ae8dc3a84f6/internal/llm/client.go): `ChatRequest.Tools`, `ToolChoice`, `ChatMessage.ToolCallID`, `StreamChunk.ToolCallDeltas`.
+- [`internal/samapp/model.go`](https://github.com/SolaceDev/solace-agent-mesh-go/blob/038d17cd61c4ba19580c704774131ae8dc3a84f6/internal/samapp/model.go): `knownProviders`, `ParseModelConfig`, endpoint and request keys.
+- [`internal/agentcore/agent.go`](https://github.com/SolaceDev/solace-agent-mesh-go/blob/038d17cd61c4ba19580c704774131ae8dc3a84f6/internal/agentcore/agent.go): assembling model responses and attaching tool results to conversation messages.
+- [`docs/docs/documentation/installing/configure.md`](https://github.com/SolaceDev/solace-agent-mesh-go/blob/038d17cd61c4ba19580c704774131ae8dc3a84f6/docs/docs/documentation/installing/configure.md): provider prefix selects protocol.
 
-## Why the hard gates are exactly these three
+Python paths:
 
-The agent loop is, stripped down:
+- [`src/solace_agent_mesh/agent/adk/models/lite_llm.py`](https://github.com/SolaceLabs/solace-agent-mesh/blob/f71e744842a66331a7dbb33e5fba8319dc892d12/src/solace_agent_mesh/agent/adk/models/lite_llm.py): LiteLLM request and response conversion.
+- [`src/solace_agent_mesh/agent/sac/app.py`](https://github.com/SolaceLabs/solace-agent-mesh/blob/f71e744842a66331a7dbb33e5fba8319dc892d12/src/solace_agent_mesh/agent/sac/app.py): `supports_streaming` configuration, documented as A2A streaming.
 
-```
-loop:
-  resp = llm.ChatCompletionStream(req)         # needs streaming (H2)
-  if resp.FinishReason == "tool_calls":        # needs native tool calls (H1)
-      results = execute(resp.ToolCalls)
-      req.Messages += assistant(resp.ToolCalls)
-      req.Messages += tool(results)            # needs tool-result turns (H3)
-      continue
-  else:
-      return resp.Content                       # final answer
-```
+## Levels must not be collapsed
 
-Remove any one of H1/H2/H3 and this loop cannot complete a single tool-using task. Everything else changes *how well* or *how cheaply* the loop runs, not *whether* it runs. That's the principled basis for the hard/strong/nice split.
+| Level | Meaning | Current repository status |
+|---|---|---|
+| Publisher-documented | Model artifact and capabilities described upstream | Catalog entries reach this level |
+| Endpoint-probed | This exact endpoint passes the smoke checks | No live result recorded |
+| SAM-validated | Real runtime trace shows dependent tool execution | No live result recorded |
+| Workload-qualified | Held-out business tests pass agreed criteria | No result recorded |
+| Production-approved | Security, licensing, capacity and failure gates accepted | No approval claimed |
 
-## Why compatibility is model-gated, not SAM-gated
+The generator never turns a parser hint into a compatibility grade. `source_checked_at` is a research date, not a test date. `model_revision` identifies the inspected upstream snapshot, not an endorsed production release.
 
-SAM's provider layer (Bifrost/LiteLLM) already speaks to 19 named providers and any OpenAI-compatible endpoint. So SAM will happily *send* a tool-calling request to any of the shortlisted models. Whether the model *answers correctly* - emits well-formed streaming tool calls and uses tool results - is a property of the model + its serving stack. Hence the shortlist ranks models by that property, and the harness validates it per-stack.
+## Research rules
 
-## Limits of this analysis
+Use official publisher repositories and documentation. Store exact checkpoint IDs and immutable revisions; distinguish hosted aliases, announcements, base models and draft modules. Context comes from the inspected config/architecture parameters; documented extensions stay in notes. Preserve missing values instead of estimating a score or parser. Link license text separately from model metadata.
 
-- Tool-calling **grades** in the shortlist are from community and vendor reports as of mid-2026, not from running all of them through the harness in one lab. They're a prior, not a measurement. The harness turns the prior into a measurement for *your* stack.
-- Context windows are commonly-served defaults; several models support more with RoPE scaling at some quality cost.
-- Licenses change and vary by variant - always check the specific checkpoint's card.
-- The SAM codebase evolves. The evidence citations are accurate as of the commit present when this repo was authored (`internal/llm/client.go` interface shape). Re-check against the current `client.go` if in doubt.
+Recommendations are engineering judgments about which candidates to evaluate, with assumptions stated. Publisher benchmark tables are not independently reproduced. Compare only matched benchmark versions, harnesses and budgets. [Evaluation method](benchmarks.md).
+
+The previous runner did not evaluate its printed assertions. It also assumed a universal SAM CLI shape. The replacement checks exported, normalized traces and returns an explicit incomplete result when none is supplied. Live trace extraction remains runtime-specific and must preserve provenance.

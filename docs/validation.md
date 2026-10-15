@@ -1,117 +1,91 @@
-# Validating a Model
+# Validate a model and deployment bundle
 
-Grades in the [shortlist](shortlist.md) are starting points. This is how you get a definitive **yes/no** for a specific model, quant, and serving stack. Two levels:
+There are three distinct activities: an executable endpoint smoke probe, assertions on a real exported SAM trace, and broader enterprise qualification. None substitutes for the next.
 
-1. **`probe.sh`** - talks straight to your OpenAI-compatible endpoint with `curl`. No SAM required. Checks the three hard gates in isolation. Fast, catches most failures.
-2. **`run-sam-scenario.sh`** - runs a real SAM agent through a two-tool scenario. This is the ground truth: it exercises the actual agent loop, streaming reassembly, and multi-turn tool-result handling that a raw probe can't fully reproduce.
+## 1. Endpoint smoke probe
 
-Always run `probe.sh` first (cheap), then confirm with the SAM scenario.
-
----
-
-## Validate any model in 3 commands
+Run from the repository root with Python 3.10+:
 
 ```bash
-# 1. Point at your endpoint (any OpenAI-compatible server)
-export SAM_TEST_MODEL="openai/Qwen/Qwen2.5-32B-Instruct"
-export SAM_TEST_API_BASE="http://localhost:8000/v1"
-export SAM_TEST_API_KEY="sk-noop"        # many local servers ignore this
-
-# 2. Run the capability probe (no SAM required - pure OpenAI-compat check)
-../scripts/probe.sh
-
-# 3. Run the full SAM two-tool agent scenario (requires SAM installed)
-../scripts/run-sam-scenario.sh
+export SAM_TEST_MODEL='openai/sam-candidate'
+export SAM_TEST_API_BASE='http://127.0.0.1:8000/v1'
+# Set SAM_TEST_API_KEY through your secret environment when required.
+./scripts/probe.sh --report probe-result.json
 ```
 
-`probe.sh` checks the three hard gates directly against the endpoint. `run-sam-scenario.sh` runs a real SAM agent that must call tool A, then call tool B *using A's output* - the exact loop that separates real tool-callers from pretenders. The rest of this page explains each level and how to read the results.
+| Check | Assertion |
+|---|---|
+| H1 | One native `get_weather` call, nonempty ID, `tool_calls` finish reason, exact JSON city argument |
+| H2 | Valid SSE, choice/tool indices, name/argument fragments, unique IDs and complete termination; reconstructed call passes H1 argument checks |
+| H3 | Continue from the H1 assistant call and a linked tool result containing an unpredictable receipt; reproduce receipt AND temperature, finish normally and make no extra call |
 
----
+The random receipt reduces false passes from memorized weather answers. This is still a small behavioral sample, not proof of general tool competence. H2 checks one streamed tool call; parser regression tests also cover interleaved indices, but live parallel capability requires a separate test.
 
-## Prerequisites
+Exit codes: **0** all smoke checks passed; **1** one or more failed; **2** invalid/missing configuration. HTTP, TLS, malformed response and incomplete stream failures cannot become passes. Network requests have time/response-size limits, TLS verification stays enabled, and redirects are rejected. Reports exclude credentials, endpoint URLs and response bodies. The model ID is recorded; handle reports according to your information policy.
 
-- A model served behind an OpenAI-compatible API. See [serving.md](serving.md) to stand one up.
-- `curl` and `jq` for the probe.
-- SAM installed for the full scenario (`sam` on PATH). See the [SAM install docs](https://github.com/SolaceDev/solace-agent-mesh).
+| Environment variable | Meaning |
+|---|---|
+| `SAM_TEST_MODEL` | SAM-style model name; only a leading `openai/` protocol prefix is removed |
+| `SAM_TEST_BARE_MODEL` | Optional exact endpoint ID override, useful for another adapter prefix |
+| `SAM_TEST_API_BASE` | Base ending in `/v1` or the route your endpoint uses before `/chat/completions` |
+| `SAM_TEST_API_KEY` | Optional bearer credential; no default fake key is sent |
+| `SAM_TEST_TIMEOUT` | Request budget in seconds, default 120 |
+| `SAM_TEST_EXTRA_BODY` | JSON generation settings such as `max_tokens`, reasoning or template options; cannot override the probe's model/tools/messages/stream/choice contract |
+
+For gpt-oss hub names, `SAM_TEST_MODEL='openai/openai/gpt-oss-120b'` correctly leaves endpoint ID `openai/gpt-oss-120b`. Prefer a stable gateway alias. If a model exhausts its reasoning budget, qualify a suitable higher limit rather than mislabeling the model unsupported.
+
+Run through the production gateway route as well as the isolated backend test route. A backend pass does not qualify a gateway's SSE and tool-field handling.
+
+## 2. Real SAM scenarios
+
+Use your installed SAM runtime and a working project with broker, gateway, identities and model configuration. The fragments in `tests/configs/` illustrate tool registration and **must be merged into that project**. They are not a standalone bootable environment. `tests/tools/validation_tools.py` contains synthetic business tools; the model must be live, without a static/mocked LLM response.
+
+Submit the prompt in the chosen `tests/scenarios/*.yaml`. Export the actual runtime trace, including tool calls and results. On the inspected Python CLI, `sam task run --help` exposes `--config`, `--agent` and `--output-dir`; it does **not** expose the old runner's assumed `--format json`. The Go runtime and other releases can differ. Verify the command and trace format on your installed version.
+
+Normalize the original trace into this JSON contract, preserving event order and observed values:
+
+```json
+{
+  "schema_version": 1,
+  "evidence_origin": "live-sam",
+  "sam_runtime": "python-or-go",
+  "sam_version": "actual-release-or-commit",
+  "adapter_version": "actual-adapter-version",
+  "model_revision": "actual-weight-revision",
+  "server_image_digest": "sha256:actual-image-digest",
+  "run_id": "actual-task-id",
+  "source_trace_sha256": "64-lowercase-hex-digits-of-original-export",
+  "events": [
+    {"kind":"tool_call","turn":0,"call_id":"a","name":"lookup_order","arguments":{"order_id":"ORD-1001"}},
+    {"kind":"tool_result","call_id":"a","result":{"warehouse":"observed-opaque-code"}},
+    {"kind":"tool_call","turn":1,"call_id":"b","name":"get_shipping_estimate","arguments":{"warehouse":"observed-opaque-code","destination":"Copenhagen"}},
+    {"kind":"tool_result","call_id":"b","result":{"warehouse":"observed-opaque-code","destination":"Copenhagen","days":1,"cost_eur":4.90}},
+    {"kind":"final_answer","text":"Shipping takes 1 day and costs EUR 4.90."}
+  ]
+}
+```
+
+This documentation example is not executable evidence. Do not manufacture or edit event values to satisfy the checker. A runtime-specific exporter/normalizer is intentionally required; this repository does not claim a universal live trace adapter. Verify normalization against the original trace during review. A hash detects mismatched files; it does not authenticate the origin or semantic accuracy of a supplied trace.
 
 ```bash
-export SAM_TEST_MODEL="openai/Qwen/Qwen2.5-32B-Instruct"   # provider/model
-export SAM_TEST_API_BASE="http://localhost:8000/v1"        # your endpoint
-export SAM_TEST_API_KEY="sk-noop"                          # any value if server ignores it
+./scripts/run-sam-scenario.sh two-tool-dependency \
+  --trace normalized.json --source-trace original-export.json
 ```
 
----
+The checker verifies the source hash, required provenance fields, matched call IDs/results, sequence, use of the **observed** warehouse and both shipping cost and duration in the final answer. Tool fixtures randomize warehouse codes per process startup. A supplied trace without a verifiable original export is incomplete.
 
-## Level 1 - the endpoint probe
+`forced-tool` additionally requires a captured `request_tool_choice` value of `required` or `lookup_order`; a prompt telling the model to use tools does not prove forced choice. `parallel-tools` requires both lookups in the same assistant turn before either result, unique IDs and both observed items in the final answer. Sequential correctness does not demonstrate parallel calling.
 
-```bash
-./scripts/probe.sh
-```
+The script exits **2 / INCOMPLETE** if required trace inputs are absent, **1 / FAIL** for failed assertions or malformed evidence, and **0 / PASS** only for assertions on the supplied evidence. It does not launch SAM and does not assert that H2 was exercised; retain the endpoint streaming result and the runtime request/stream configuration separately.
 
-It runs three checks and prints a PASS/FAIL per hard gate:
+## 3. Promotion evidence
 
-| Check | Gate | What it sends | Pass condition |
-|---|---|---|---|
-| **1. Tool call** | H1 | A `tools` array with `get_weather(city)` and a prompt that needs it | Response has `choices[0].message.tool_calls[0].function.name == "get_weather"` with JSON args containing a city |
-| **2. Streaming tool call** | H2 | Same, with `"stream": true` | SSE chunks carry `delta.tool_calls[]`; concatenated `arguments` fragments parse as valid JSON |
-| **3. Tool-result turn** | H3 | The assistant tool_call turn + a `tool` role result, asks for a final answer | Response *uses* the returned value (e.g. mentions the temperature) and does not re-call the tool or hallucinate |
+Copy `tests/results/qualification-template.json` into your restricted evidence store. Attach endpoint reports, original/normalized SAM traces, held-out task results, artifact hashes, limits, load/failure tests and approvals. Never put credentials or confidential traces into this public repository.
 
-A model that fails any of these is **not SAM-compatible** on this stack - fix the serving (tool parser, template, quant) or pick another model.
+| Evidence | What it establishes |
+|---|---|
+| Endpoint PASS only | This small protocol sample passed on the endpoint |
+| Endpoint + supplied SAM trace PASS | Smoke protocol checks and the supplied runtime scenario assertions passed |
+| Held-out workload, security, load and recovery gates accepted | Readiness for the explicitly tested workload/envelope, subject to owner approval |
 
-### Reading failures
-
-- **No `tool_calls` at all** → missing/wrong `--tool-call-parser` (vLLM) or the model genuinely can't tool-call. Fails H1.
-- **Tool call in non-stream but not stream** → server doesn't emit tool-call deltas while streaming. Fails H2 - a common vLLM/SGLang flag issue.
-- **Malformed JSON in `arguments`** → quant too aggressive or template mismatch. Borderline S3; will cause dispatch errors in SAM.
-- **Ignores the tool result / re-calls the tool** → chat template can't represent the `tool` turn. Fails H3.
-
----
-
-## Level 2 - the SAM two-tool scenario
-
-This is the real test. The scenario forces a **dependent** two-step tool chain: the agent must call `lookup_order`, then call `get_shipping_estimate` **using the warehouse code returned by the first call**. A model that fakes tool calling cannot pass this - it has no way to invent the correct warehouse code.
-
-```bash
-./scripts/run-sam-scenario.sh
-```
-
-Under the hood this:
-
-1. Renders `tests/configs/model.yaml` and `tests/configs/agent.yaml` from your `SAM_TEST_*` env vars.
-2. Starts SAM embedded with those configs.
-3. Submits the scenario prompt from `tests/scenarios/two-tool-dependency.yaml`.
-4. Asserts the agent called both tools **in order**, that the second call's `warehouse` argument matches the first call's returned value, and that the final answer contains the expected shipping figure.
-
-### What each scenario proves
-
-| Scenario file | Proves | Gate(s) |
-|---|---|---|
-| `two-tool-dependency.yaml` | Dependent multi-hop tool use - the core agent loop | H1, H2, H3, S3 |
-| `forced-tool.yaml` | `tool_choice: required` is honored (mandatory call) | S1 |
-| `parallel-tools.yaml` | Two independent tools in one turn, results ordered | N1 |
-
-Run a specific scenario:
-
-```bash
-./scripts/run-sam-scenario.sh forced-tool
-./scripts/run-sam-scenario.sh parallel-tools
-```
-
----
-
-## Interpreting the overall result
-
-| probe.sh | SAM scenario | Verdict |
-|---|---|---|
-| All PASS | two-tool PASS | ✅ **Production-viable** on this stack. Run `forced-tool` + `parallel-tools` to grade S1/N1. |
-| All PASS | two-tool FAIL | ⚠ Streaming/multi-turn issue the probe missed - check tool parser + template. Not yet viable. |
-| H1 PASS, H2 FAIL | - | ❌ Streaming tool calls broken. Fix serving flags or don't stream (loses SAM's default UX). |
-| H1 FAIL | - | ❌ Model/stack can't tool-call. Not compatible. |
-
-## Recording results
-
-Log outcomes in your own copy of `models/index.csv` (columns include `validated_stack` and `validated_date`) so your team has a stack-specific truth table, not just the generic grades. Example row convention:
-
-```
-Qwen2.5-32B-Instruct,openai,128000,Excellent,Apache-2.0,orchestrator,"vLLM 0.6.x, AWQ 4-bit, --tool-call-parser hermes","2026-07-31: probe PASS, two-tool PASS, forced-tool PASS"
-```
+A pass on a different quantization, template, gateway, reasoning setting or runtime version must not be copied into a new deployment's validation record.

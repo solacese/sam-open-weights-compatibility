@@ -1,231 +1,77 @@
-# Serving Open Models for SAM
+# Serve an approved model for SAM
 
-SAM needs an **OpenAI-compatible** endpoint. The recipes below stand one up for each common server, plus the SAM `model:` block that points at it. The golden rule from the SAM docs:
+Use the publisher's recipe for the exact checkpoint, accelerator and weight format, then pin a working runtime image. A generic “OpenAI-compatible” label does not verify tool parsing, reasoning history, streaming or schema coverage.
 
-> The `openai/` prefix tells Bifrost which **API protocol** to speak - not which model runs. A proxy fronting *any* open model uses `openai/` + `api_base`. `ollama/` is a first-class prefix for Ollama.
+## Engine selection
 
-The critical detail for SAM is **tool calling must work while streaming (H2)**. Most servers need an explicit tool-call parser flag for that. Each recipe calls it out.
+| Engine / platform | Sensible evaluation role | Qualification focus |
+|---|---|---|
+| vLLM | Shared production inference, supported dense/MoE checkpoints | Model support, tool + reasoning parsers, precision-specific kernels, memory and distributed topology |
+| SGLang | Production candidate where its checkpoint recipe is established | Exact parser flags and template, scheduling, distributed behavior and observability |
+| NVIDIA NIM / TensorRT-LLM / Dynamo | Organizations standardizing supported NVIDIA inference profiles | Supported hardware/model profile, build artifacts, software terms and operational ownership |
+| KServe / Kubernetes model platform | Lifecycle, routing and deployment orchestration around an engine | Tenant policy, rollout, autoscaling and GPU scheduling; does not add model tool-calling capabilities |
+| Ollama / llama.cpp | Local development, constrained edge or dedicated small services | Exact quant/template, protocol behavior and concurrency; separately design enterprise auth and operations |
+| Hugging Face TGI | Existing qualified installations | Upstream is in maintenance mode; not the default new-platform recommendation |
+| LiteLLM or another inference gateway | Optional policy/routing layer | Adapter fidelity, identity, quotas, timeouts, streaming pass-through and no prohibited fallback |
 
----
+Sources: [vLLM](https://docs.vllm.ai/en/latest/), [SGLang](https://docs.sglang.ai/), [NVIDIA inference](https://docs.nvidia.com/nim/large-language-models/latest/), [Dynamo](https://docs.nvidia.com/dynamo/latest/), [KServe](https://kserve.github.io/website/), [TGI maintenance notice](https://huggingface.co/docs/text-generation-inference/en/index).
 
-## 5-minute quickstart
+A gateway translates or governs requests; it does not turn an arbitrary text model into a reliable tool caller.
 
-You need two things: an OpenAI-compatible endpoint serving the model, and a SAM `model:` block pointing at it. Here is the shortest path with the two most common servers; the full recipes (SGLang, TGI, LiteLLM, air-gapped, TLS) are below.
+## Concrete local smoke-test recipe: Qwen3.6 35B A3B with vLLM
 
-### Option A - Ollama (easiest, laptop-friendly)
-
-```bash
-# 1. Install Ollama (https://ollama.com), then pull a tool-capable model
-ollama pull qwen2.5:32b
-
-# 2. Start the server (OpenAI-compatible API on :11434)
-ollama serve
-```
-
-Point SAM at it. Ollama is a first-class SAM provider prefix:
-
-```yaml
-model:
-  model: ollama/qwen2.5:32b
-  api_base: http://localhost:11434
-```
-
-### Option B - vLLM (production, GPU)
+The [checked publisher card](https://huggingface.co/Qwen/Qwen3.6-35B-A3B/blob/995ad96eacd98c81ed38be0c5b274b04031597b0/README.md) documents `qwen3_coder` for tool calls and `qwen3` for reasoning. This reduced-context example is a **starting configuration, not a tested deployment**. Use a reviewed, pinned vLLM environment with this architecture supported; set tensor parallelism for your measured hardware capacity.
 
 ```bash
-pip install vllm
-
-# The two tool-calling flags are REQUIRED - without them SAM cannot call tools.
-vllm serve Qwen/Qwen2.5-32B-Instruct \
-  --host 0.0.0.0 --port 8000 \
+export MODEL_REVISION='995ad96eacd98c81ed38be0c5b274b04031597b0'
+export TP_SIZE=2   # illustrative; qualify memory and throughput on your actual GPUs
+vllm serve Qwen/Qwen3.6-35B-A3B \
+  --revision "$MODEL_REVISION" \
+  --served-model-name sam-candidate \
+  --host 127.0.0.1 --port 8000 \
+  --tensor-parallel-size "$TP_SIZE" \
+  --max-model-len 32768 \
+  --max-num-seqs 8 \
   --enable-auto-tool-choice \
-  --tool-call-parser hermes \
-  --max-model-len 32768
+  --tool-call-parser qwen3_coder \
+  --reasoning-parser qwen3
 ```
 
-Point SAM at it (`openai/` selects the API protocol, not a hosted model):
+The vendor's full-context recipe uses a larger topology. Lowering context and request concurrency changes the evaluation envelope; it does not validate quality at 256K. No quantization is implied above. Do not combine a 4-bit memory estimate with an unquantized launch.
+
+```bash
+export SAM_TEST_MODEL='openai/sam-candidate'
+export SAM_TEST_API_BASE='http://127.0.0.1:8000/v1'
+./scripts/probe.sh --report probe-result.json
+```
+
+Bind a local experiment to loopback. For a deployed service, use a private gateway with TLS and authenticated workload access, and allow traffic only from the gateway to the model server. In a container the server may need a private-interface bind; do not publish it as an unauthenticated public endpoint. [Enterprise controls](enterprise-self-hosting.md).
+
+## Model-specific traps
+
+- Qwen3.8 variants have different architecture and license details. Follow their own recipe links; do not assume the Qwen3.6 launch applies unchanged.
+- For gpt-oss, the server must correctly implement Harmony, including tool calls and reasoning. Do not replace its template with a generic chat template. [OpenAI implementation checks](https://developers.openai.com/cookbook/articles/gpt-oss/verifying-implementations).
+- Mistral checkpoints may require their tokenizer/config flags in addition to `--tool-call-parser mistral`; reasoning models also need the documented reasoning parser.
+- New DeepSeek, Kimi and Nemotron architectures can require special kernels, offload configuration, custom code or a specific engine build. Review those artifacts before admitting them into an enterprise registry.
+- Publisher hub pages often generate a generic `vllm serve` snippet automatically. Prefer the authored model card's deployment section or linked engine cookbook, not that auto-generated snippet alone.
+- Do not add `trust_remote_code`, a nightly image or a downloaded parser plugin to a production service without reviewing and pinning the added code.
+
+See [each candidate card](shortlist.md) for the checked publisher recipe entry point. `see-recipe` is an explicit unknown parser hint; it is not a literal CLI argument.
+
+## SAM model fragment and gateway alias
 
 ```yaml
 model:
-  model: openai/Qwen/Qwen2.5-32B-Instruct
-  api_base: http://localhost:8000/v1
-  api_key: sk-noop            # vLLM ignores this unless you set --api-key
-  parallel_tool_calls: true
-  temperature: 0.2
+  model: openai/enterprise-orchestrator
+  api_base: ${LLM_API_BASE}
+  api_key: ${LLM_API_KEY}
   max_tokens: 4096
 ```
 
-### Then confirm it actually works
+Embed this fragment in the configuration supported by your installed SAM version. Set secrets through your deployment's secret provider. Keep the `openai/` protocol prefix even when the underlying model is Qwen, Mistral or gpt-oss. The endpoint must expose `enterprise-orchestrator`; record the artifact bundle to which the gateway resolves it.
 
-```bash
-export SAM_TEST_MODEL="openai/Qwen/Qwen2.5-32B-Instruct"   # or ollama/qwen2.5:32b
-export SAM_TEST_API_BASE="http://localhost:8000/v1"        # or http://localhost:11434/v1
-../scripts/probe.sh
-```
+Do not copy model-independent temperature, thinking or parallel-tool defaults into every family. Start with the publisher's guidance, confirm which settings the adapter forwards, and qualify the actual request envelope. A 4096-token limit is only a smoke-test setting and can truncate a reasoning model before its first tool call.
 
-Each model's card in [`../models/cards/`](../models/cards/) has the exact `--tool-call-parser`, serve command, and copy-paste `model:` block for that model. To prove a full SAM agent loop, see [`validation.md`](validation.md).
+## Verify the gateway as well as the server
 
----
-
-## vLLM (recommended for production)
-
-```bash
-vllm serve Qwen/Qwen2.5-32B-Instruct \
-  --host 0.0.0.0 --port 8000 \
-  --enable-auto-tool-choice \
-  --tool-call-parser hermes \
-  --max-model-len 32768
-```
-
-- `--enable-auto-tool-choice` + `--tool-call-parser <parser>` are **required** for H1/H2. Pick the parser that matches the model family:
-  | Model family | `--tool-call-parser` |
-  |---|---|
-  | Qwen2.5 / Qwen2.5-Coder / Qwen3 | `hermes` |
-  | Llama 3.1 / 3.3 | `llama3_json` |
-  | Mistral / Mixtral / Mistral Small / NeMo / Large | `mistral` |
-  | DeepSeek-V3 / R1 (0528) | `deepseek_v3` |
-  | DeepSeek-V3.1 | `deepseek_v31` |
-  | GLM-4.5 / 4.6 | `glm45` |
-  | gpt-oss 20b / 120b | `openai` |
-  | Kimi-K2 | `kimi_k2` |
-  | Command A (03-2025) | `cohere_command3` |
-  | Command R / R+ (legacy) | no current parser - prefer Command A |
-- Serving a quantized checkpoint? Add `--quantization awq` (or `gptq`, `fp8`) and use the matching quantized repo. **Aggressive quant degrades JSON-arg fidelity (S3) - validate.**
-
-SAM `model:` block:
-
-```yaml
-model:
-  model: openai/Qwen/Qwen2.5-32B-Instruct   # openai/ = protocol; name = whatever vLLM serves
-  api_base: http://localhost:8000/v1
-  api_key: sk-noop                          # vLLM ignores unless --api-key set
-  parallel_tool_calls: true
-  temperature: 0.2
-  max_tokens: 4096
-```
-
----
-
-## SGLang (high-throughput alternative)
-
-```bash
-python -m sglang.launch_server \
-  --model-path Qwen/Qwen2.5-32B-Instruct \
-  --host 0.0.0.0 --port 8000 \
-  --tool-call-parser qwen25
-```
-
-SGLang exposes an OpenAI-compatible `/v1`. Same SAM block as vLLM (point `api_base` at `:8000/v1`). Confirm the tool-call parser matches your model; SGLang's parser names differ from vLLM's.
-
----
-
-## Ollama (fastest local dev)
-
-```bash
-ollama pull qwen2.5:32b
-ollama serve            # serves OpenAI-compatible API on :11434/v1
-```
-
-Ollama is a **first-class SAM provider prefix**:
-
-```yaml
-model:
-  model: ollama/qwen2.5:32b
-  api_base: http://localhost:11434
-```
-
-Or via the OpenAI-compat path:
-
-```yaml
-model:
-  model: openai/qwen2.5:32b
-  api_base: http://localhost:11434/v1
-  api_key: ollama
-```
-
-Ollama tool calling works for tool-capable models (Qwen2.5, Llama 3.1/3.3, Mistral) but **streaming tool-call support has historically lagged** - run `probe.sh` check 2 (H2) before relying on it. Great for dev, validate for prod.
-
----
-
-## Text Generation Inference (TGI)
-
-```bash
-docker run --gpus all -p 8000:80 \
-  ghcr.io/huggingface/text-generation-inference:latest \
-  --model-id Qwen/Qwen2.5-32B-Instruct
-```
-
-TGI's `/v1/chat/completions` is OpenAI-compatible and supports tools/`tool_choice` on recent versions. SAM block:
-
-```yaml
-model:
-  model: openai/Qwen/Qwen2.5-32B-Instruct
-  api_base: http://localhost:8000/v1
-  api_key: sk-noop
-```
-
----
-
-## LiteLLM proxy (front many backends as one)
-
-Useful when you want SAM to see one endpoint but route to several open models, or to add auth/logging.
-
-`litellm-config.yaml`:
-
-```yaml
-model_list:
-  - model_name: qwen-32b
-    litellm_params:
-      model: openai/Qwen/Qwen2.5-32B-Instruct
-      api_base: http://vllm-host:8000/v1
-      api_key: sk-noop
-  - model_name: llama-70b
-    litellm_params:
-      model: openai/meta-llama/Llama-3.3-70B-Instruct
-      api_base: http://vllm-host2:8000/v1
-      api_key: sk-noop
-```
-
-```bash
-litellm --config litellm-config.yaml --port 4000
-```
-
-SAM block:
-
-```yaml
-model:
-  model: openai/qwen-32b            # the LiteLLM model_name
-  api_base: http://localhost:4000
-  api_key: ${LITELLM_KEY}
-```
-
-This is exactly the pattern a corporate inference gateway (e.g. an internal MaaS) uses - SAM points at the gateway with `openai/` + `api_base` + a virtual key, and the gateway fans out to the real backends.
-
----
-
-## Air-gapped / on-prem
-
-SAM supports fully air-gapped deployment. Any in-cluster vLLM/SGLang/TGI/LiteLLM works via `openai/` + an internal `api_base`. For self-signed TLS on the endpoint:
-
-```yaml
-model:
-  model: openai/Qwen/Qwen2.5-32B-Instruct
-  api_base: https://llm.internal:8443/v1
-  api_ca_cert: /etc/ssl/certs/internal-ca.pem   # or api_skip_tls_verify: true (dev only)
-  api_key_file: /var/run/secrets/llm/api_key     # file-based secret (K8s/Docker)
-```
-
-See the SAM air-gap docs for the broader offline story.
-
----
-
-## Serving checklist for SAM
-
-- [ ] Endpoint answers `GET /v1/models` (OpenAI-compatible).
-- [ ] Tool-call parser flag set and matches the model family.
-- [ ] `probe.sh` H1 (tool call) PASS.
-- [ ] `probe.sh` H2 (streaming tool call) PASS - **this is the one servers most often miss.**
-- [ ] `probe.sh` H3 (tool-result turn) PASS.
-- [ ] Context window (`--max-model-len` / server config) ≥ your agent's need (32K leaf, 128K orchestrator).
-- [ ] Quant level validated for JSON-argument fidelity if using AWQ/GPTQ/FP8.
-- [ ] SAM `run-sam-scenario.sh two-tool-dependency` PASS.
+Run the same probe directly against the private server in the test environment and through the deployed gateway. Compare call IDs, tool names/arguments, streaming termination, errors, usage, request limits and cancellation. A gateway can buffer SSE or strip reasoning/tool fields even when the backend is correct. The final acceptance test uses the exact route SAM will call.

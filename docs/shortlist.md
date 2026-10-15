@@ -1,92 +1,44 @@
-# Open-Weights Models for SAM: the verified shortlist
+# October 2026 model candidates
 
-25 models, ranked by fit against the [requirements whitelist](requirements.md), weighted toward the hard gates - **reliable, streaming, OpenAI-schema tool calling** - then by practical hosting cost and context.
+Snapshot: **15 October 2026**. Listing order groups evaluation candidates; it is not a benchmark ranking. Every entry is **publisher-documented / SAM not run**. No live GPU or SAM validation results are claimed.
 
-Every "grade" here is grounded in three primary sources, not a guess: the [vLLM tool-call parser matrix](https://docs.vllm.ai/en/latest/features/tool_calling.html) (does a working server-side parser exist?), the [Berkeley Function-Calling Leaderboard](https://gorilla.cs.berkeley.edu/leaderboard.html) (is the model in the native Function-Calling tier or only the Prompt tier?), and each model's Hugging Face card (does the chat template define a `tool` role?). See [benchmarks.md](benchmarks.md) for the per-model evidence, and **[validate on your stack](validation.md)** before production - the grade tells you where to start, the harness gives the yes/no on your infrastructure.
+Context below is the reference config/card limit, not a tested service capacity. Publisher extensions and special memory components are noted on each card. See [selection](pick-a-model.md), [capacity](capacity-planning.md), and [license review](licensing.md).
 
-All models marked `yes`/`partial` are servable behind an OpenAI-compatible API (`openai/` prefix + `api_base`) via vLLM, SGLang, TGI, Ollama, or a LiteLLM proxy. Context figures are the commonly-served values; some support larger with RoPE scaling.
+| Candidate | Total / active parameters | Reference context | License | Suggested evaluation role |
+|---|---|---|---|---|
+| [Qwen3.8 27B](../models/cards/qwen-qwen3-8-27b.md) | 27B / 27B | 262,144 | apache-2.0 | domain-or-orchestrator |
+| [Qwen3.6 35B A3B](../models/cards/qwen-qwen3-6-35b-a3b.md) | 35B / 3B | 262,144 | apache-2.0 | domain-or-orchestrator |
+| [Qwen3.5 9B](../models/cards/qwen-qwen3-5-9b.md) | 9B / 9B | 262,144 | apache-2.0 | leaf |
+| [Qwen3.8 Flash Next](../models/cards/qwen-qwen3-8-flash-next.md) | 125B backbone + 51B n-gram + 4B MTP / 6B backbone active | 262,144 | qwen-community-1.0 | orchestrator |
+| [Qwen3.8 2.4T A95B](../models/cards/qwen-qwen3-8-2-4t-a95b.md) | 2.4T / 95B | 262,144 | qwen3.8-max | frontier |
+| [Gemma 4 31B IT](../models/cards/google-gemma-4-31b-it.md) | 30.7B text + vision / 30.7B text | 262,144 | apache-2.0 | domain-or-orchestrator |
+| [Gemma 4 26B A4B IT](../models/cards/google-gemma-4-26b-a4b-it.md) | 25.2B text + vision / 3.8B text | 262,144 | apache-2.0 | domain |
+| [Gemma 4 12B IT](../models/cards/google-gemma-4-12b-it.md) | 11.95B / 11.95B | 262,144 | apache-2.0 | leaf |
+| [Ministral 3 14B Instruct](../models/cards/mistralai-ministral-3-14b-instruct-2512.md) | 14B / 14B | 262,144 | apache-2.0 | leaf |
+| [Devstral Small 2 24B](../models/cards/mistralai-devstral-small-2-24b-instruct-2512.md) | 24B / 24B | 393,216 | apache-2.0 | coding |
+| [Mistral Small 4 119B](../models/cards/mistralai-mistral-small-4-119b-2603.md) | 119B / 6.5B | 1,048,576 | apache-2.0 | orchestrator |
+| [Mistral Medium 3.5 128B](../models/cards/mistralai-mistral-medium-3-5-128b.md) | 128B / 128B | 262,144 | Modified MIT (revenue restriction) | orchestrator |
+| [Mistral Large 3 675B](../models/cards/mistralai-mistral-large-3-675b-instruct-2512.md) | 675B / 41B | 294,912 | apache-2.0 | frontier |
+| [gpt-oss 20b](../models/cards/openai-gpt-oss-20b.md) | 21B / 3.6B | 131,072 | apache-2.0 | leaf |
+| [gpt-oss 120b](../models/cards/openai-gpt-oss-120b.md) | 117B / 5.1B | 131,072 | apache-2.0 | orchestrator |
+| [GLM 5.3 Flash](../models/cards/zai-org-glm-5-3-flash.md) | 320B / 18B | 1,048,576 | mit | orchestrator |
+| [GLM 5.3](../models/cards/zai-org-glm-5-3.md) | 753B / see report | 1,048,576 | glm-5.3 | frontier |
+| [DeepSeek V4.1 Flash](../models/cards/deepseek-ai-deepseek-v4-1-flash.md) | 552B backbone + 196B Engram / 8B prefill / 16B decode | 1,048,576 | mit | frontier |
+| [DeepSeek V4 Pro 0813](../models/cards/deepseek-ai-deepseek-v4-pro-0813.md) | 1.6T backbone / 49B | 1,048,576 | mit | frontier |
+| [Kimi K2.7 Code](../models/cards/moonshotai-kimi-k2-7-code.md) | 1T + vision / 32B | 262,144 | modified-mit | coding |
+| [Kimi K3](../models/cards/moonshotai-kimi-k3.md) | 2.8T + vision / 104B | 1,048,576 | kimi-k3 | frontier |
+| [Nemotron 3 Super 120B BF16](../models/cards/nvidia-nvidia-nemotron-3-super-120b-a12b-bf16.md) | 120B / 12B | 262,144 | nvidia-nemotron-open-model-license | orchestrator |
+| [Nemotron 3 Ultra 550B NVFP4](../models/cards/nvidia-nvidia-nemotron-3-ultra-550b-a55b-nvfp4.md) | 550B / 55B | 262,144 | openmdw-1.1 | frontier |
+| [Nemotron 3.5 Lightning 30B NVFP4](../models/cards/nvidia-nvidia-nemotron-3-5-lightning-30b-a3b-nvfp4.md) | 30B / 3B | 1,048,576 | openmdw-1.1 | leaf-or-domain |
+| [Nemotron 3.5 Super VL 120B BF16](../models/cards/nvidia-nvidia-nemotron-3-5-super-vl-120b-a12b-bf16.md) | 120B / 12B | 1,048,576 | openmdw-1.1 | multimodal-orchestrator |
 
-Grade legend: **excellent** = native tool calling with a mature vLLM parser, in the BFCL Function-Calling tier or SAM `modelinfo`; **very-good** = native tool calling with a working parser, widely used; **good** = native tool calling, occasional JSON-arg quirks - validate S3; **validate-first** = tool calling is conditional (specific revision, template, or serving path) - must pass the harness; **unsupported** = no native tool calling, not recommended for SAM.
+## Announcements and exclusions
 
-## Recommended (native tool calling, ready to validate)
+- **Mistral Large 4:** API preview announced 6 October; publisher schedules weights for month end. Excluded from downloadable candidates as of this snapshot. [Announcement](https://mistral.ai/news/mistral-large-4/).
+- **Reflection Beam:** announced 501B / 23B active. Track checkpoint, license and supported serving evidence before qualification. [Publisher announcement](https://reflection.ai/blog/introducing-beam). No SAM verdict recorded here.
+- Hosted aliases and benchmarks do not establish that matching downloadable weights have the same features.
+- Draft models, base checkpoints, guard classifiers, embeddings and rerankers are not interchangeable with agent models.
 
-| # | Model | Params (active) | Context | Grade | vLLM parser | License | Best role |
-|---|---|---|---|---|---|---|---|
-| 1 | **Llama 3.3 70B Instruct** | 70B | 128K | excellent | `llama3_json` | Llama 3.3 Community | Orchestrator |
-| 2 | **Qwen2.5 72B Instruct** | 72B | 128K | excellent | `hermes` | Qwen | Orchestrator |
-| 3 | **Qwen2.5 32B Instruct** | 32B | 128K | excellent | `hermes` | Apache-2.0 | Orchestrator (budget) |
-| 4 | **Qwen3 32B** | 32B | 128K | excellent | `hermes` | Apache-2.0 | Orchestrator |
-| 5 | **Mistral Large 2 (2411)** | 123B | 128K | excellent | `mistral` | MRL (non-prod free) | Orchestrator |
-| 6 | **Llama 3.1 405B Instruct** | 405B | 128K | excellent | `llama3_json` | Llama 3.1 Community | Orchestrator (ceiling) |
-| 7 | **Llama 3.1 70B Instruct** | 70B | 128K | excellent | `llama3_json` | Llama 3.1 Community | Orchestrator |
-| 8 | **DeepSeek-V3.1** | 671B MoE (37B) | 128K | very-good | `deepseek_v31` | DeepSeek (MIT-style) | Orchestrator |
-| 9 | **GLM-4.6** | 355B MoE (32B) | 128K | very-good | `glm45` | MIT | Orchestrator |
-| 10 | **gpt-oss 120b** | 117B MoE (5.1B) | 128K | very-good | `openai` | Apache-2.0 | Orchestrator |
-| 11 | **Kimi-K2 Instruct** | 1T MoE (32B) | 128K | very-good | `kimi_k2` | Modified MIT | Orchestrator |
-| 12 | **Command A (03-2025)** | 111B | 256K | very-good | `cohere_command3` | CC-BY-NC-4.0 | Compliance / RAG |
-| 13 | **Qwen2.5 14B Instruct** | 14B | 128K | very-good | `hermes` | Apache-2.0 | Domain agent |
-| 14 | **Mixtral 8x22B Instruct** | 141B MoE (39B) | 64K | good | `mistral` | Apache-2.0 | Orchestrator (efficient) |
-| 15 | **Mistral Small 3 (24B)** | 24B | 32K | very-good | `mistral` | Apache-2.0 | Domain agent |
-| 16 | **Qwen2.5 7B Instruct** | 7B | 128K | good | `hermes` | Apache-2.0 | Leaf agent (volume) |
-| 17 | **Qwen2.5-Coder 32B** | 32B | 128K | very-good | `hermes` | Apache-2.0 | Structured-arg tools |
-| 18 | **gpt-oss 20b** | 21B MoE (3.6B) | 128K | good | `openai` | Apache-2.0 | Leaf agent |
-| 19 | **Mistral NeMo 12B** | 12B | 128K | good | `mistral` | Apache-2.0 | Leaf agent |
-| 20 | **Llama 3.1 8B Instruct** | 8B | 128K | good | `llama3_json` | Llama 3.1 Community | Leaf agent |
+## Historical coverage
 
-## Validate first (conditional tool calling)
-
-These have partial or revision-specific tool calling. They can work, but do not assume it - run the [harness](validation.md) (H1-H3) before any use.
-
-| # | Model | Params (active) | Context | Grade | vLLM parser | License | Why conditional |
-|---|---|---|---|---|---|---|---|
-| 21 | **DeepSeek-R1 (0528)** | 671B MoE (37B) | 128K | validate-first | `deepseek_v3` | MIT | Use the **0528** revision + R1 chat template; base R1 is BFCL Prompt-tier only. |
-| 22 | **Command R+ (legacy)** | 104B | 128K | validate-first | none | CC-BY-NC-4.0 | Superseded by Command A; no current vLLM parser. Prefer #12. |
-
-## Not recommended (no native tool calling)
-
-Listed so you know why, and what to use instead. These lack native OpenAI-schema tool calling, so they fail H1 regardless of prompt engineering.
-
-| # | Model | Context | License | Why not | Use instead |
-|---|---|---|---|---|---|
-| 23 | **Gemma 2 27B Instruct** | 8K | Gemma | No parser in vLLM; HF template has no `tool` role; only `google/functiongemma-270m-it` has FC. 8K context also limiting. | Qwen2.5 32B (#3) |
-| 24 | **Phi-4 (14B)** | 16K | MIT | No vLLM parser; HF template is system/user/assistant only; BFCL Prompt-tier only. | Qwen2.5 14B (#13) |
-| 25 | **Yi-1.5 34B Chat** | 32K | Apache-2.0 | Not in the vLLM parser list or the BFCL Function-Calling tier; no confirmed native FC. | Mistral Small 3 24B (#15) |
-
----
-
-## How to choose
-
-### By role
-
-- **Orchestrator** (multi-hop routing, fan-out, synthesis, forced tools): **#1-12, #14, #17**. This is where tool-calling reliability and context matter most. Llama 3.3 70B, Qwen2.5 72B/32B, and Qwen3 32B are the safe picks.
-- **Domain / leaf agent** (one or two tools, high volume): **#13, #15, #16, #18, #19, #20**. Optimize for cost and latency; you don't need 70B to call one tool.
-- **Compliance / RAG-heavy agent**: **#12** (Command A) or **#2/#3** (Qwen) - strong grounded, citation-friendly answers.
-- **Reasoning-forward agent**: **#8** (DeepSeek-V3.1) or **#10** (gpt-oss 120b, agentic-first) for reasoning + reliable tools; **#21** (DeepSeek-R1 0528) with a `thinking:` budget only after the harness passes.
-
-### By constraint
-
-| Constraint | Recommendation |
-|---|---|
-| **Apache-2.0 / commercial-clean** | Qwen2.5 (any size), Qwen3 32B, Mixtral 8x22B, Mistral Small 3, Mistral NeMo, gpt-oss 20b/120b. |
-| **MIT-licensed** | GLM-4.6, DeepSeek-R1 0528. |
-| **Single 80GB GPU (quantized)** | Qwen2.5 32B, Qwen3 32B, Mistral Small 3 24B, Qwen2.5-Coder 32B, gpt-oss 20b. |
-| **Single consumer GPU (24GB, quantized)** | Qwen2.5 7B/14B, Llama 3.1 8B, Mistral NeMo 12B, gpt-oss 20b (~16GB). |
-| **Maximum capability, host is not a constraint** | Llama 3.1 405B, Kimi-K2, DeepSeek-V3.1, Qwen2.5 72B. |
-| **Long documents in context** | Command A (256K), or any 128K: Llama 3.x, Qwen2.5/Qwen3, Mistral NeMo/Large, DeepSeek, GLM, gpt-oss. Avoid Gemma 2 (8K), Phi-4 (16K). |
-
-## What we deliberately excluded
-
-- **Base / non-instruct models** - no chat template, no tool calling. Instruct/chat variants only.
-- **Models with no native OpenAI tool-call support** - Gemma 2, Phi-4, Yi-1.5 (see the not-recommended table). They fail H1.
-- **Sub-7B models** - tool-calling reliability drops off sharply; the agent loop stalls or loops. Use only for trivial single-tool agents after passing the harness.
-- **Embedding / reranker models** - not chat/agent models.
-
-## A note on grades vs. reality
-
-Tool-calling reliability for a given model depends heavily on:
-
-1. **The serving stack's tool parser** - vLLM `--tool-call-parser`, SGLang's, or Ollama's template. A wrong or missing parser turns "excellent" into "broken." A model with parser `none` will not do SAM tool calling on a stock serve at all.
-2. **Quant level** - aggressive quantization (e.g. 3-bit) degrades JSON-argument fidelity (S3) before it degrades chat quality.
-3. **Chat template** - the model's tokenizer template must include the tool-calling sections. Mismatches cause H3 failures.
-
-This is exactly why the [validation harness](validation.md) exists. Treat this table as *where to start*, then let the harness give you the *yes/no on your infrastructure*.
+The original 25 rows remain in [legacy-2025.csv](../models/legacy-2025.csv) for migration reference. Their grades, parser hints, hardware estimates and BFCL figures are historical, unverified claims, not current recommendations. Existing qualified Llama 3, Qwen 2.5 or other deployments can remain useful; requalify before changing them.

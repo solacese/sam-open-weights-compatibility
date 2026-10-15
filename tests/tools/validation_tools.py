@@ -1,29 +1,25 @@
-"""Deterministic mock tools for SAM open-weights model validation.
+"""Local synthetic business tools; the LLM remains live during SAM qualification.
 
-These are intentionally trivial and stateless. Their only job is to force the
-model through the real agent tool-calling loop with a DEPENDENT chain:
-`lookup_order` returns a warehouse code that `get_shipping_estimate` requires.
-
-A model that fakes tool calling cannot pass, because it has no way to invent the
-correct warehouse code ("WH-DK-02") without actually receiving lookup_order's
-result and passing it back - which is exactly SAM's H3 (tool-result turn).
-
-Wire these as SAM Python tools (see tests/configs/agent.yaml). Signatures follow
-SAM's function-based tool convention: async, keyword args matching the schema,
-optional tool_context / tool_config.
+Warehouse codes are random per tool-process startup. Expected values must come
+from the actual observed lookup result, never from a prompt or fixed assertion.
+These fixtures are for validation only, not production business integrations.
 """
+import secrets
 from typing import Any, Dict, Optional
 
-# Fixed data so assertions are deterministic.
+# Opaque dependency values make canned final answers insufficient evidence.
+_WAREHOUSE_ONE = "WH-" + secrets.token_hex(8)
+_WAREHOUSE_TWO = "WH-" + secrets.token_hex(8)
+
 _ORDERS = {
-    "ORD-1001": {"order_id": "ORD-1001", "item": "Carlsberg Pilsner 24-pack", "warehouse": "WH-DK-02"},
-    "ORD-1002": {"order_id": "ORD-1002", "item": "Tuborg Green 12-pack", "warehouse": "WH-DK-05"},
+    "ORD-1001": {"order_id": "ORD-1001", "item": "Office monitor", "warehouse": _WAREHOUSE_ONE},
+    "ORD-1002": {"order_id": "ORD-1002", "item": "Laptop dock", "warehouse": _WAREHOUSE_TWO},
 }
 
 _SHIPPING = {
-    ("WH-DK-02", "Copenhagen"): {"days": 1, "cost_eur": 4.90},
-    ("WH-DK-02", "Berlin"): {"days": 3, "cost_eur": 12.50},
-    ("WH-DK-05", "Copenhagen"): {"days": 2, "cost_eur": 5.40},
+    (_WAREHOUSE_ONE, "Copenhagen"): {"days": 1, "cost_eur": 4.90},
+    (_WAREHOUSE_ONE, "Berlin"): {"days": 3, "cost_eur": 12.50},
+    (_WAREHOUSE_TWO, "Copenhagen"): {"days": 2, "cost_eur": 5.40},
 }
 
 
@@ -52,7 +48,7 @@ async def get_shipping_estimate(
     """Estimate shipping days and cost from a warehouse to a destination.
 
     Args:
-        warehouse: Warehouse code, e.g. "WH-DK-02" (comes from lookup_order).
+        warehouse: Opaque warehouse code returned by lookup_order.
         destination: Destination city, e.g. "Copenhagen".
     """
     est = _SHIPPING.get((warehouse, destination))
@@ -65,7 +61,7 @@ async def get_shipping_estimate(
     return {"warehouse": warehouse, "destination": destination, **est}
 
 
-# --- JSON-Schema mirror of the tools, for probe.sh / non-SAM harnesses ---
+# JSON-Schema mirror for endpoint adapters that exercise the same fixture.
 TOOL_SCHEMAS = [
     {
         "type": "function",
